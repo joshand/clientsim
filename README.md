@@ -4,9 +4,14 @@
 ## Getting Started
 * Make sure you have Python3, pip, and virtualenv installed. You'll also need docker. If you are going to be working with the API via cURL, we recommend install 'jq' as well.
     ```
-    sudo apt install python3 python3-pip python3-virtualenv docker jq
+    sudo apt install python3 python3-pip python3-virtualenv docker.io jq
     ```
-* Pull down the repo and initialize application.
+* Start docker and enable at boot-time
+    ```
+    sudo systemctl start docker
+    sudo systemctl enable docker
+    ```
+* Pull down the repo and initialize application. Note: Python needs to be run as root since we are manipulating system parameters.
     ```
     git clone https://github.com/joshand/clientsim.git
     cd clientsim/
@@ -25,5 +30,6 @@
     python manage.py drf_create_token admin
     Generated token 1234567890abcdefghijklmnopqrstuvwxyz1234 for user admin
     
-    python manage.py runserver 8000
+    python manage.py loaddata < import.json
+    sudo ./venv/bin/python manage.py runserver 127.0.0.1:8000     (note: if you want this to be reachable externally, use the actual IP address of your client)
     ```

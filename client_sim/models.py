@@ -91,6 +91,14 @@ def post_save_upload(sender, instance=None, created=False, **kwargs):
     post_save.connect(post_save_upload, sender=Upload)
 
 
+class ServerSettings(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    ipaddress = models.TextField(blank=True, null=True, default=None)
+
+    def __str__(self):
+        return self.ipaddress
+
+
 class InstanceAutomation(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     description = models.CharField("Shell Commands", max_length=100, blank=False, null=False)
@@ -535,6 +543,16 @@ class Container(models.Model):
     def __str__(self):
         return self.description
 
+    def get_dockerfile(self):
+        serversettings = ServerSettings.objects.all()
+        if serversettings > 0:
+            ss = serversettings[0]
+            sip = ss["ipaddress"]
+        else:
+            sip = "127.0.0.1"
+
+        return self.dockerfile.replace("{{server_ip}}", sip)
+
 
 class Network(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -755,6 +773,13 @@ class Client(models.Model):
             else:
                 delaystring += "0 "
 
+        serversettings = ServerSettings.objects.all()
+        if serversettings > 0:
+            ss = serversettings[0]
+            sip = ss["ipaddress"]
+        else:
+            sip = "127.0.0.1"
+
         scr = self.container.clientscript
         scr = scr.replace('"', '\\\"').replace("'", "\\\'")
         if scr is None:
@@ -763,7 +788,7 @@ class Client(models.Model):
         scr = scr.replace("{{app_urls}}", urlstring)
         scr = scr.replace("{{app_delays}}", delaystring)
         scr = scr.replace("{{app_count}}", str(len(self.app.all())))
-        scr = scr.replace("{{server_ip}}", "10.101.228.11")
+        scr = scr.replace("{{server_ip}}", sip)
         return scr
 
     def dockercontainerscripthash(self):

@@ -40,7 +40,7 @@ def create_docker_containers(client, containers, log, delete_existing=False):
             # dolog("sync_docker_containers", "create_new_container_published", newcli)
             cmdout += "New Published Container " + str(newcli) + "\n"
         elif c.container.containertype.name == "DOCKERFILE":
-            df = str(c.container.dockerfile) + "\n"
+            df = str(c.container.get_dockerfile()) + "\n"
             f = BytesIO(df.encode('utf-8'))
             try:
                 client2 = docker.APIClient(base_url='unix://var/run/docker.sock')
