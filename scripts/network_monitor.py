@@ -66,6 +66,7 @@ def sync_docker_networks():
     try:
         client = docker.from_env()
         dnets = client.networks.list()
+        append_log(log, "sync_docker_networks", dnets)
         # First, check to see if all relevant Docker networks exist in the database. If not, import them.
         for dn in dnets:
             # print(dn.attrs)
