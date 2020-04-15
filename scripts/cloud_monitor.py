@@ -916,14 +916,15 @@ def sync_cloud():
     # print(clouds1, clouds2)
 
 
-# Enable the job scheduler to run schedule jobs
-cron = BackgroundScheduler()
+def run():
+    # Enable the job scheduler to run schedule jobs
+    cron = BackgroundScheduler()
 
-# Explicitly kick off the background thread
-cron.start()
-cron.remove_all_jobs()
-job0 = cron.add_job(sync_cloud)
-job1 = cron.add_job(sync_cloud, 'interval', seconds=10)
+    # Explicitly kick off the background thread
+    cron.start()
+    cron.remove_all_jobs()
+    job0 = cron.add_job(sync_cloud)
+    job1 = cron.add_job(sync_cloud, 'interval', seconds=10)
 
-# Shutdown your cron thread if the web process is stopped
-atexit.register(lambda: cron.shutdown(wait=False))
+    # Shutdown your cron thread if the web process is stopped
+    atexit.register(lambda: cron.shutdown(wait=False))

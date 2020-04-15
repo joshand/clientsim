@@ -92,17 +92,18 @@ def import_networks():
     # print(eth, wls)
 
 
-# Enable the job scheduler to run schedule jobs
-cron = BackgroundScheduler()
+def run():
+    # Enable the job scheduler to run schedule jobs
+    cron = BackgroundScheduler()
 
-# Explicitly kick off the background thread
-cron.start()
-cron.remove_all_jobs()
-job0 = cron.add_job(import_networks)
-job1 = cron.add_job(import_networks, 'interval', seconds=60)
+    # Explicitly kick off the background thread
+    cron.start()
+    cron.remove_all_jobs()
+    job0 = cron.add_job(import_networks)
+    job1 = cron.add_job(import_networks, 'interval', seconds=60)
 
-# Shutdown your cron thread if the web process is stopped
-atexit.register(lambda: cron.shutdown(wait=False))
+    # Shutdown your cron thread if the web process is stopped
+    atexit.register(lambda: cron.shutdown(wait=False))
 
 
 # if __name__ == '__main__':

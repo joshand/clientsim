@@ -15,23 +15,54 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from django.conf.urls import url, include
 from django.conf.urls.static import static
-from client_sim.views import *
-# import clientsim.network_proxy
-try:
-    import clientsim.interface_monitor
-    import clientsim.network_monitor
-    import clientsim.client_monitor
-    import clientsim.cloud_monitor
-except:
-    print("Exception starting scheduled jobs")
+from rest_framework import routers
+from rest_framework.authtoken.views import obtain_auth_token
+from rest_framework.schemas import get_schema_view
+from rest_framework.renderers import JSONOpenAPIRenderer
+from client_sim import views
+from clientsim import tasks
+from clientsim import settings
+tasks.run_tasks()
 
+router = routers.DefaultRouter()
+router.register(r'upload', views.UploadViewSet)
+router.register(r'instanceautomation', views.InstanceAutomationViewSet)
+router.register(r'cloudtype', views.CloudTypeViewSet)
+router.register(r'cloud', views.CloudViewSet)
+router.register(r'cloudimage', views.CloudImageViewSet)
+router.register(r'cloudvpc', views.CloudVPCViewSet)
+router.register(r'cloudsubnet', views.CloudSubnetViewSet)
+router.register(r'cloudsecuritygroup', views.CloudSecurityGroupViewSet)
+router.register(r'cloudinstance', views.CloudInstanceViewSet)
+router.register(r'dashboard', views.DashboardViewSet)
+router.register(r'dashboardlicense', views.DashboardLicenseViewSet)
+router.register(r'log', views.LogViewSet)
+router.register(r'networktype', views.NetworkTypeViewSet)
+router.register(r'interface', views.InterfaceViewSet)
+router.register(r'containertype', views.ContainerTypeViewSet)
+router.register(r'container', views.ContainerViewSet)
+router.register(r'network', views.NetworkViewSet)
+router.register(r'app', views.AppViewSet)
+router.register(r'appprofile', views.AppProfileViewSet)
+router.register(r'client', views.ClientViewSet)
+router.register(r'linkprofile', views.LinkProfileViewSet)
+router.register(r'eventday', views.EventDayViewSet)
+router.register(r'linkevent', views.LinkEventViewSet)
+router.register(r'appevent', views.AppEventViewSet)
+
+schema_view = get_schema_view(title="Client Simulator API", renderer_classes=[JSONOpenAPIRenderer])
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('upload/', upload_file),
-    path('logs/', show_log),
-    path('home/', show_home, name="home"),
+    path('upload/', views.upload_file),
+    path('logs/', views.show_log),
+    path('home/', views.show_home, name="home"),
+    path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+    path('api-token-auth/', obtain_auth_token, name='api_token_auth'),
+    path('api/v0/schema/', schema_view),
+    path(r'api/v0/', include(router.urls)),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -132,3 +132,4 @@ dmypy.json
 .idea
 sources.txt
 tsocks.conf
+client_sim/migrations

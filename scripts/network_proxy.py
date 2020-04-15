@@ -189,19 +189,19 @@ def shutdown():
         print("Error", e)
 
 
-# Enable the job scheduler to run schedule jobs
-cron = BackgroundScheduler(standalone=True)
+def run():
+    # Enable the job scheduler to run schedule jobs
+    cron = BackgroundScheduler(standalone=True)
 
-# Explicitly kick off the background thread
-cron.start()
-cron.remove_all_jobs()
-job = cron.add_job(start_server)
+    # Explicitly kick off the background thread
+    cron.start()
+    cron.remove_all_jobs()
+    job = cron.add_job(start_server)
 
-# Shutdown your cron thread if the web process is stopped
-atexit.register(shutdown)      #lambda: cron.shutdown(wait=False)
+    # Shutdown your cron thread if the web process is stopped
+    atexit.register(shutdown)      # lambda: cron.shutdown(wait=False)
 
-
-# if __name__ == '__main__':
-#     # with ThreadingTCPServer(('0.0.0.0', SOCKS_PORT), SocksProxy) as server:
-#     with TCPServer(('0.0.0.0', SOCKS_PORT), SocksProxy) as server:
-#         server.serve_forever()
+    # if __name__ == '__main__':
+    #     # with ThreadingTCPServer(('0.0.0.0', SOCKS_PORT), SocksProxy) as server:
+    #     with TCPServer(('0.0.0.0', SOCKS_PORT), SocksProxy) as server:
+    #         server.serve_forever()

@@ -15,6 +15,19 @@ from django.utils.timezone import make_aware
 import requests
 import boto3
 from django.db.models import Q
+from rest_framework import authentication
+
+
+class BearerAuthentication(authentication.TokenAuthentication):
+    """
+    Simple token based authentication using utvsapitoken.
+
+    Clients should authenticate by passing the token key in the 'Authorization'
+    HTTP header, prepended with the string 'Bearer '.  For example:
+
+        Authorization: Bearer 1234567890abcdefghijklmnopqrstuvwxyz1234
+    """
+    keyword = 'Bearer'
 
 
 """
@@ -605,10 +618,10 @@ def post_save_network(sender, instance=None, created=False, **kwargs):
 class App(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     description = models.CharField("Application Description", max_length=100, null=False, default=None)
-    url = models.CharField("Application (URL)", max_length=100, null=True, blank=False, default=None)
+    appurl = models.CharField("Application (URL)", max_length=100, null=True, blank=False, default=None)
 
     def __str__(self):
-        return self.description + " (" + self.url + ")"
+        return self.description + " (" + self.appurl + ")"
 
 
 class AppProfile(models.Model):
@@ -730,7 +743,7 @@ class Client(models.Model):
 
         urlstring = ""
         for a in self.app.all():
-            urlstring += a.url + " "
+            urlstring += a.appurl + " "
 
         delaystring = ""
         for a in self.app.all():

@@ -159,14 +159,15 @@ def sync_docker_networks():
         dolog("sync_docker_networks", "import_docker_nets_into_db", "error", e)
 
 
-# Enable the job scheduler to run schedule jobs
-cron = BackgroundScheduler()
+def run():
+    # Enable the job scheduler to run schedule jobs
+    cron = BackgroundScheduler()
 
-# Explicitly kick off the background thread
-cron.start()
-cron.remove_all_jobs()
-job0 = cron.add_job(sync_docker_networks)
-job1 = cron.add_job(sync_docker_networks, 'interval', seconds=10)
+    # Explicitly kick off the background thread
+    cron.start()
+    cron.remove_all_jobs()
+    job0 = cron.add_job(sync_docker_networks)
+    job1 = cron.add_job(sync_docker_networks, 'interval', seconds=10)
 
-# Shutdown your cron thread if the web process is stopped
-atexit.register(lambda: cron.shutdown(wait=False))
+    # Shutdown your cron thread if the web process is stopped
+    atexit.register(lambda: cron.shutdown(wait=False))
