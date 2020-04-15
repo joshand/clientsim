@@ -93,7 +93,7 @@ def post_save_upload(sender, instance=None, created=False, **kwargs):
 
 class ServerSetting(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    ipaddress = models.TextField(blank=True, null=True, default=None)
+    ipaddress = models.CharField(max_length=100, blank=True, null=True, default=None)
 
     def __str__(self):
         return self.ipaddress
