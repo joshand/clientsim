@@ -175,3 +175,10 @@ class TaskSerializer(serializers.ModelSerializer):
         model = Task
         fields = ('id', 'url', 'description', 'task_data', 'last_update')
         read_only_fields = ('id', 'url', 'description', 'task_data', 'last_update')
+
+
+class ServerSettingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ServerSetting
+        fields = ('id', 'url', 'ipaddress')
+        read_only_fields = ('id', 'url')

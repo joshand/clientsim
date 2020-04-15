@@ -386,3 +386,17 @@ class TaskViewSet(viewsets.ModelViewSet):
     """
     queryset = Task.objects.all().order_by('last_update')
     serializer_class = TaskSerializer
+
+
+class ServerSettingsViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows Server Settings to be viewed.
+
+    retrieve:
+    Return a Server Setting.
+
+    list:
+    Return all Server Settings.
+    """
+    queryset = ServerSetting.objects.all().order_by('last_update')
+    serializer_class = ServerSettingSerializer

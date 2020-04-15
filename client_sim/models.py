@@ -91,7 +91,7 @@ def post_save_upload(sender, instance=None, created=False, **kwargs):
     post_save.connect(post_save_upload, sender=Upload)
 
 
-class ServerSettings(models.Model):
+class ServerSetting(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     ipaddress = models.TextField(blank=True, null=True, default=None)
 
@@ -544,7 +544,7 @@ class Container(models.Model):
         return self.description
 
     def get_dockerfile(self):
-        serversettings = ServerSettings.objects.all()
+        serversettings = ServerSetting.objects.all()
         if serversettings > 0:
             ss = serversettings[0]
             sip = ss["ipaddress"]
@@ -773,7 +773,7 @@ class Client(models.Model):
             else:
                 delaystring += "0 "
 
-        serversettings = ServerSettings.objects.all()
+        serversettings = ServerSetting.objects.all()
         if serversettings > 0:
             ss = serversettings[0]
             sip = ss["ipaddress"]
