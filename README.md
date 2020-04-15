@@ -2,9 +2,9 @@
 
 
 ## Getting Started
-* Make sure you have Python3, pip, and virtualenv installed
+* Make sure you have Python3, pip, and virtualenv installed. You'll also need docker. If you are going to be working with the API via cURL, we recommend install 'jq' as well.
     ```
-    sudo apt install python3 python3-pip python3-virtualenv
+    sudo apt install python3 python3-pip python3-virtualenv docker jq
     ```
 * Pull down the repo and initialize application.
     ```

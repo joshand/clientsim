@@ -168,3 +168,10 @@ class AppEventSerializer(serializers.ModelSerializer):
         model = AppEvent
         fields = ('id', 'url', 'day', 'starttime', 'endtime', 'app', 'appprofile')
         read_only_fields = ('id', 'url')
+
+
+class TaskSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Task
+        fields = ('id', 'url', 'description', 'task_data', 'last_update')
+        read_only_fields = ('id', 'url', 'description', 'task_data', 'last_update')

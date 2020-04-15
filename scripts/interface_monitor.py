@@ -11,11 +11,12 @@ import atexit
 from apscheduler.schedulers.background import BackgroundScheduler
 from getmac import get_mac_address
 from client_sim.models import *
+from scripts.dblog import *
 
 
-def dolog(fn, step, *txt):
-    l = Log.objects.create(function=fn, step=step, log=",".join(map(str, txt)))
-    l.save()
+# def dolog(fn, step, *txt):
+#     l = Log.objects.create(function=fn, step=step, log=",".join(map(str, txt)))
+#     l.save()
 
 
 def get_interfaces():
@@ -56,10 +57,13 @@ def detect_wireless(clean_interfaces):
 
 
 def import_networks():
+    log = []
     interfaces = get_interfaces()
     clean_interfaces = detect_virtual_interfaces(interfaces)
     eth = detect_ethernet(clean_interfaces)
     wls = detect_wireless(clean_interfaces)
+    append_log(log, "interface_monitor::import_networks::eth", eth)
+    append_log(log, "interface_monitor::import_networks::wls", wls)
 
     dockerbr = "docker0"
     m = get_mac_address(interface=dockerbr)
@@ -90,6 +94,7 @@ def import_networks():
         # print(i, m)
 
     # print(eth, wls)
+    db_log("interface_monitor", log)
 
 
 def run():

@@ -7,6 +7,7 @@ from django.conf import settings
 from django.db.models import F
 from django.utils.timezone import make_aware
 import subprocess
+from scripts.dblog import *
 
 
 """
@@ -17,12 +18,12 @@ import subprocess
  """
 
 
-def dolog(fn, step, *txt):
-    l = Log.objects.create(function=fn, step=step, log=",".join(map(str, txt)))
-    l.save()
+# def dolog(fn, step, *txt):
+#     l = Log.objects.create(function=fn, step=step, log=",".join(map(str, txt)))
+#     l.save()
 
 
-def create_docker_nets(client, nets, delete_existing=False):
+def create_docker_nets(client, nets, log, delete_existing=False):
     for n in nets:
         if n.addrpool:
             ipam_pool = docker.types.IPAMPool(subnet=n.subnet, gateway=n.dg, iprange=n.addrpool)
@@ -35,19 +36,19 @@ def create_docker_nets(client, nets, delete_existing=False):
 
         if n.networktype.driver == "macvlan":
             if settings.TRUNK_INTERFACE == "":
-                dolog("sync_docker_networks", "create_docker_macvlan",
+                append_log(log, "create_docker_macvlan",
                       "request to connect macvlan, but no trunk interface defined")
             else:
                 netname = "macvlan" + str(n.vlan)
                 netopt = {"parent": settings.TRUNK_INTERFACE + "." + str(n.vlan)}
                 if delete_existing:
-                    dolog("sync_docker_networks", "resync_docker_network", n.networkid)
+                    append_log(log, "resync_docker_network", n.networkid)
                     client.networks.get(n.networkid).remove()
                     n.networkid = None
                     n.skip_sync = True
                     n.save()
 
-                dolog("sync_docker_networks", "create_docker_macvlan", netname, ipam_config, netopt)
+                append_log(log, "create_docker_macvlan", netname, ipam_config, netopt)
                 dt = make_aware(datetime.datetime.now())
                 if ipam_config:
                     newnet = client.networks.create(netname, driver="macvlan", ipam=ipam_config, options=netopt)
@@ -61,6 +62,7 @@ def create_docker_nets(client, nets, delete_existing=False):
 
 
 def sync_docker_networks():
+    log = []
     try:
         client = docker.from_env()
         dnets = client.networks.list()
@@ -87,16 +89,16 @@ def sync_docker_networks():
 
                 intid = Interface.objects.filter(name__iexact=newint)
                 if intid:
-                    dolog("sync_docker_networks", "import_docker_nets_into_db", dn.id, drivers[0], newname, newsubnet, newgw, newrange, intid[0])
+                    append_log(log, "import_docker_nets_into_db", dn.id, drivers[0], newname, newsubnet, newgw, newrange, intid[0])
                     dt = make_aware(datetime.datetime.now())
                     n = Network.objects.create(networkid=dn.id, networktype=drivers[0], description=newname, interface=intid[0], subnet=newsubnet, dg=newgw, addrpool=newrange, last_sync=dt, last_update=dt)
                     n.save()
                 else:
-                    dolog("sync_docker_networks", "import_docker_nets_into_db", dn.id, drivers[0], newname, newsubnet, newgw, newrange, newint, "Unable to resolve interface name")
+                    append_log(log, "import_docker_nets_into_db", dn.id, drivers[0], newname, newsubnet, newgw, newrange, newint, "Unable to resolve interface name")
 
         # Next, check to see if there are any networks in database that do not exist in Docker
         nets = Network.objects.filter(networkid__isnull=True)
-        create_docker_nets(client, nets)
+        create_docker_nets(client, nets, log)
         # for n in nets:
         #     if n.addrpool:
         #         ipam_pool = docker.types.IPAMPool(subnet=n.subnet, gateway=n.dg, iprange=n.addrpool)
@@ -124,7 +126,7 @@ def sync_docker_networks():
 
         # Last, see if any networks have been updated and need to be re-synced
         nets = Network.objects.all().exclude(last_sync=F('last_update'))
-        create_docker_nets(client, nets, delete_existing=True)
+        create_docker_nets(client, nets, log, delete_existing=True)
         # for n in nets:
             # print(n, n.last_sync, n.last_update)
             # client.networks.
@@ -149,14 +151,16 @@ def sync_docker_networks():
                                                stdout=subprocess.PIPE,
                                                stderr=subprocess.STDOUT)
                         stdout, stderr = out.communicate()
-                        dolog("sync_docker_networks", "apply_impairment_script", newl, stdout, stderr)
+                        append_log(log, "apply_impairment_script", newl, stdout, stderr)
 
                 n.last_deployed_hash = n.networkimpairmentscripthash()
                 n.skip_sync = True
                 n.save()
 
     except Exception as e:
-        dolog("sync_docker_networks", "import_docker_nets_into_db", "error", e)
+        append_log(log, "import_docker_nets_into_db", "error", e)
+
+    db_log("network_monitor", log)
 
 
 def run():

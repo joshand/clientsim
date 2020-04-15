@@ -886,3 +886,25 @@ class AppEvent(models.Model):
 
     class Meta:
         ordering = ['app', 'day', 'starttime']
+
+
+class Task(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    description = models.CharField("Task Description", max_length=50, blank=False, null=False)
+    task_data = models.TextField(blank=True, null=True, default=None)
+    last_update = models.DateTimeField(default=django.utils.timezone.now)
+
+    def __str__(self):
+        return str(self.last_update) + "::" + self.description
+
+    class Meta:
+        ordering = ('-last_update',)
+
+
+@receiver(post_save, sender=Task)
+def post_save_task(sender, instance=None, created=False, **kwargs):
+    post_save.disconnect(post_save_task, sender=Task)
+    if instance:
+        instance.last_updated = datetime.datetime.now()
+        instance.save()
+    post_save.connect(post_save_task, sender=Task)

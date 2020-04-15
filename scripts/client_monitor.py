@@ -7,14 +7,15 @@ from django.conf import settings
 from django.utils.timezone import make_aware
 from io import BytesIO
 from django.db.models import F
+from scripts.dblog import *
 
 
-def dolog(fn, step, *txt):
-    l = Log.objects.create(function=fn, step=step, log=",".join(map(str, txt)))
-    l.save()
+# def dolog(fn, step, *txt):
+#     l = Log.objects.create(function=fn, step=step, log=",".join(map(str, txt)))
+#     l.save()
 
 
-def create_docker_containers(client, containers, delete_existing=False):
+def create_docker_containers(client, containers, log, delete_existing=False):
     for c in containers:
         cmdout = ""
         newcli = None
@@ -95,22 +96,23 @@ def sync_container_ips(containers):
 
 
 def sync_docker_clients():
+    log = []
     client = docker.from_env()
     # First, check to see if there are any clients in database that do not exist in Docker
     conts = Client.objects.filter(clientid__isnull=True)
-    print("sync_docker::create_docker_containers::phase_1", conts)
-    create_docker_containers(client, conts)
+    append_log(log, "sync_docker::create_docker_containers::phase_1", conts)
+    create_docker_containers(client, conts, log)
 
     # Last, see if any clients have been updated and need to be re-synced
     conts = Client.objects.all().exclude(last_sync=F('last_update'))
     # print(conts)
-    print("sync_docker::create_docker_containers::phase_2", conts)
-    create_docker_containers(client, conts, delete_existing=True)
+    append_log(log, "sync_docker::create_docker_containers::phase_2", conts)
+    create_docker_containers(client, conts, log, delete_existing=True)
 
     # Next, check to see if there are any clients in database that are tagged with 'force_rebuild'
     conts = Client.objects.filter(force_rebuild=True)
-    print("sync_docker::create_docker_containers::phase_3", conts)
-    create_docker_containers(client, conts, delete_existing=True)
+    append_log(log, "sync_docker::create_docker_containers::phase_3", conts)
+    create_docker_containers(client, conts, log, delete_existing=True)
 
     # Sync Container IPs
     sync_container_ips(Client.objects.all())
@@ -121,7 +123,7 @@ def sync_docker_clients():
         cmdout = ""
         if c.dockercontainerscripthash() != "":
             if (str(c.last_deployed_hash) != str(c.dockercontainerscripthash())) or c.force_script:
-                print("sync_docker::create_docker_containers::script_deployment", c)
+                append_log(log, "sync_docker::create_docker_containers::script_deployment", c)
                 c.force_script = False
                 c.skip_sync = True
                 c.save()
@@ -134,12 +136,12 @@ def sync_docker_clients():
                 # print(cmd)
                 try:
                     cmd_restart = client.containers.get(c.clientid).restart()
-                    print("sync_docker::container_restart", cmd_restart, "::next_cmd::" + cmd)
+                    append_log(log, "sync_docker::container_restart", cmd_restart, "::next_cmd::" + cmd)
                     # dolog("sync_docker::client_monitor", "script_update", "cont_restart", cmd_restart)
                     cmdout += "Restart Container: " + str(cmd_restart) + "\n"
                     cmd_res = client.containers.get(c.clientid).exec_run(cmd)
                     cmdout += "Execute Command: " + str(cmd) + "\n"
-                    print("sync_docker::create_docker_containers::code_deploy", cmd_res)
+                    append_log(log, "sync_docker::create_docker_containers::code_deploy", cmd_res)
                     cmdout += "Command Result: " + str(cmd_res) + "\n"
                     # if cmd_res.exit_code != 0:
                     #     dolog("client_monitor", "script_update", "error", cmd, cmd_res)
@@ -147,7 +149,7 @@ def sync_docker_clients():
                     #     dolog("client_monitor", "script_update", "success", cmd, cmd_res)
 
                     start_res = client.containers.get(c.clientid).exec_run(start, detach=True)
-                    print("sync_docker::create_docker_containers::script_start", start_res)
+                    append_log(log, "sync_docker::create_docker_containers::script_start", start_res)
                     cmdout += "Start Script Result: " + str(cmd_res) + "\n"
                     # if start_res.exit_code != 0:
                     #     dolog("client_monitor", "script_update", "error", start, start_res)
@@ -158,9 +160,9 @@ def sync_docker_clients():
                     c.skip_sync = True
                     c.last_sync_log = str(cmdout)
                     c.save()
-                    print("sync_docker::create_docker_containers::done")
+                    append_log(log, "sync_docker::create_docker_containers::done")
                 except Exception as e:
-                    print("sync_docker::script_update::exception", e)
+                    append_log(log, "sync_docker::script_update::exception", e)
                     # dolog("sync_docker_containers", "updating_container_script", "error", e)
                     cmdout += "Exception: " + str(e) + "\n"
         else:
@@ -171,6 +173,8 @@ def sync_docker_clients():
 
         # else:
         #     print("no script update", str(c.last_deployed_hash), str(c.dockercontainerscripthash()))
+
+    db_log("client_monitor", log)
 
 
 def run():

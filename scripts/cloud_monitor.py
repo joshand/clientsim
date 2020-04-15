@@ -10,11 +10,12 @@ from django.db.models import F, Q
 import boto3
 import time
 import paramiko
+from scripts.dblog import *
 
 
-def dolog(fn, step, *txt):
-    l = Log.objects.create(function=fn, step=step, log=",".join(map(str, txt)))
-    l.save()
+# def dolog(fn, step, *txt):
+#     l = Log.objects.create(function=fn, step=step, log=",".join(map(str, txt)))
+#     l.save()
 
 
 def set_command_variables(cmd, variables):
@@ -26,7 +27,7 @@ def set_command_variables(cmd, variables):
     return cmdout
 
 
-def wait_for_client(client, instanceip, instance_un, image_def_un, key):
+def wait_for_client(client, instanceip, instance_un, image_def_un, key, log):
     maxloops = 5
     lcount = 0
 
@@ -37,27 +38,27 @@ def wait_for_client(client, instanceip, instance_un, image_def_un, key):
     while lcount <= maxloops:
         lcount += 1
         try:
-            print("sync_cloud::instance_automation::wait_for_client", lcount)
+            append_log(log, "sync_cloud::instance_automation::wait_for_client", lcount)
             # Here 'ubuntu' is user name and 'instance_ip' is public IP of EC2
             client.connect(hostname=instanceip, username=use_un, pkey=key, timeout=5)
 
             # Execute a command(cmd) after connecting/ssh to an instance
             stdin, stdout, stderr = client.exec_command("pwd")
             ret = stdout.read()
-            print("sync_cloud::instance_automation::client_status", lcount, stdout.read(), stderr.read())
+            append_log(log, "sync_cloud::instance_automation::client_status", lcount, stdout.read(), stderr.read())
             if ret:
                 return True
 
             goodclient = True
         except Exception as e:
-            print("sync_cloud::instance_automation::exception", lcount, e)
+            append_log(log, "sync_cloud::instance_automation::exception", lcount, e)
             # print(" -", e, "; Trying again...")
             time.sleep(5)
 
     return False
 
 
-def instance_automation(instances):
+def instance_automation(instances, log):
     for i in instances:
         cmdout = {}
         client = None
@@ -65,14 +66,14 @@ def instance_automation(instances):
         rdata = i.instanceautomationscript()
         if rdata != "" and rdata is not None:
             if (str(i.last_deployed_hash) != str(i.instanceautomationscripthash())) or i.force_script:
-                print("sync_cloud::instance_automation::client_needs_update", i)
+                append_log(log, "sync_cloud::instance_automation::client_needs_update", i)
                 key = paramiko.RSAKey.from_private_key_file(i.cloud.publickey.fspath())
                 client = paramiko.SSHClient()
                 client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-                r = wait_for_client(client, i.publicip, i.username, i.cloudimage.default_username, key)
+                r = wait_for_client(client, i.publicip, i.username, i.cloudimage.default_username, key, log)
 
                 if r:
-                    print("sync_cloud::instance_automation::client_ready", r)
+                    append_log(log, "sync_cloud::instance_automation::client_ready", r)
             # rdata = i.instanceautomationscript()
             # if rdata != "" and rdata is not None:
             #     if (str(i.last_deployed_hash) != str(i.instanceautomationscripthash())) or i.force_script:
@@ -83,7 +84,7 @@ def instance_automation(instances):
                     for cmdnum in range(0, len(cmdlist)):
                         try:
                             newcmd = set_command_variables(cmdlist[cmdnum], i.automationvars)
-                            print("executing", newcmd)
+                            append_log(log, "executing", newcmd)
                             cmd = newcmd.replace("\r", "").replace("\\n", "\n").replace("$", "\$")
                             stdin, stdout, stderr = client.exec_command(cmd)
                             cmdout[str(cmdnum)] = {"command": "", "stdout": "", "stderr": ""}
@@ -106,7 +107,7 @@ def instance_automation(instances):
                     i.save()
 
 
-def get_aws_vpcs(key, secret, region, vpcid=None):
+def get_aws_vpcs(key, secret, region, log, vpcid=None):
     ec2 = boto3.client('ec2', region_name=region,
                          aws_access_key_id=key,
                          aws_secret_access_key=secret)
@@ -125,7 +126,7 @@ def get_aws_vpcs(key, secret, region, vpcid=None):
         else:
             vpcs = ec2.describe_vpcs()
     except Exception as e:
-        print("Error", e)
+        append_log(log, "Error", e)
     ec2 = None
     if len(vpcs["Vpcs"]) > 0:
         return vpcs["Vpcs"]
@@ -133,7 +134,7 @@ def get_aws_vpcs(key, secret, region, vpcid=None):
         return []
 
 
-def create_aws_vpcs(obj):
+def create_aws_vpcs(obj, log):
     for o in obj:
         logdata = ""
         dt = make_aware(datetime.datetime.now())
@@ -156,7 +157,7 @@ def create_aws_vpcs(obj):
             )
             logdata += "Set Name: " + str(ret) + "\n"
 
-            i = get_aws_vpcs(o.cloud.key, o.cloud.secret, o.cloud.zone, vpcid=vpc.id)
+            i = get_aws_vpcs(o.cloud.key, o.cloud.secret, o.cloud.zone, log, vpcid=vpc.id)
             o.cloudid = vpc.id
             o.rawdata = i[0]
         except Exception as e:
@@ -208,7 +209,7 @@ def update_aws_vpcs(obj):
     return []
 
 
-def get_aws_subnets(key, secret, region, subnetid=None):
+def get_aws_subnets(key, secret, region, log, subnetid=None):
     ec2 = boto3.client('ec2', region_name=region,
                          aws_access_key_id=key,
                          aws_secret_access_key=secret)
@@ -227,7 +228,8 @@ def get_aws_subnets(key, secret, region, subnetid=None):
         else:
             nets = ec2.describe_subnets()
     except Exception as e:
-        print("Error", e)
+        append_log(log, "Error", e)
+
     ec2 = None
     if len(nets["Subnets"]) > 0:
         return nets["Subnets"]
@@ -235,7 +237,7 @@ def get_aws_subnets(key, secret, region, subnetid=None):
         return []
 
 
-def create_aws_subnets(obj):
+def create_aws_subnets(obj, log):
     for o in obj:
         logdata = ""
         dt = make_aware(datetime.datetime.now())
@@ -272,7 +274,7 @@ def create_aws_subnets(obj):
             )
             logdata += "Change MapPublicIpOnLaunch: " + str(ret) + "\n"
 
-            i = get_aws_subnets(o.cloud.key, o.cloud.secret, o.cloud.zone, subnetid=subnet.id)
+            i = get_aws_subnets(o.cloud.key, o.cloud.secret, o.cloud.zone, log, subnetid=subnet.id)
             o.cloudid = subnet.id
             o.rawdata = i[0]
         except Exception as e:
@@ -336,7 +338,7 @@ def update_aws_subnets(obj):
     return []
 
 
-def get_aws_securitygroups(key, secret, region, groupid=None):
+def get_aws_securitygroups(key, secret, region, log, groupid=None):
     ec2 = boto3.client('ec2', region_name=region,
                          aws_access_key_id=key,
                          aws_secret_access_key=secret)
@@ -355,7 +357,7 @@ def get_aws_securitygroups(key, secret, region, groupid=None):
         else:
             sgs = ec2.describe_security_groups()
     except Exception as e:
-        print("Error", e)
+        append_log(log, "Error", e)
     ec2 = None
     if len(sgs["SecurityGroups"]) > 0:
         return sgs["SecurityGroups"]
@@ -363,7 +365,7 @@ def get_aws_securitygroups(key, secret, region, groupid=None):
         return []
 
 
-def create_aws_securitygroups(obj):
+def create_aws_securitygroups(obj, log):
     for o in obj:
         logdata = ""
         dt = make_aware(datetime.datetime.now())
@@ -385,7 +387,7 @@ def create_aws_securitygroups(obj):
             )
             logdata += "Update Name: " + str(ret) + "\n"
 
-            i = get_aws_securitygroups(o.cloud.key, o.cloud.secret, o.cloud.zone, groupid=o.cloudid)
+            i = get_aws_securitygroups(o.cloud.key, o.cloud.secret, o.cloud.zone, log, groupid=o.cloudid)
             o.rawdata = i[0]
         except Exception as e:
             logdata += "Exception " + str(e)
@@ -434,7 +436,7 @@ def update_aws_securitygroups(obj):
     return []
 
 
-def get_aws_instances(key, secret, region, instanceid=None):
+def get_aws_instances(key, secret, region, log, instanceid=None):
     ec2 = boto3.client('ec2', region_name=region,
                          aws_access_key_id=key,
                          aws_secret_access_key=secret)
@@ -465,7 +467,7 @@ def get_aws_instances(key, secret, region, instanceid=None):
                     ]
                 )
         except Exception as e:
-            print("Error", e)
+            append_log(log, "Error", e)
     ec2 = None
     if len(instances["Reservations"]) > 0:
         return instances["Reservations"]
@@ -487,7 +489,7 @@ def get_aws_instance_userdata(instance):
     return None
 
 
-def create_aws_instances(obj):
+def create_aws_instances(obj, log):
     outinst = []
 
     for o in obj:
@@ -527,7 +529,7 @@ def create_aws_instances(obj):
 
             logdata += config_aws_instance(o, curinst.id, src_dst_check=o.srcdstcheck, instance_name=o.description,
                                            security_groups=o.cloudsecuritygroup.all())
-            i = get_aws_instances(o.cloud.key, o.cloud.secret, o.cloud.zone, instanceid=curinst.id)[0]["Instances"][0]
+            i = get_aws_instances(o.cloud.key, o.cloud.secret, o.cloud.zone, log, instanceid=curinst.id)[0]["Instances"][0]
             o.publicdns = i["PublicDnsName"]
             o.publicip = i["PublicIpAddress"]
             o.privateip = i["PrivateIpAddress"]
@@ -677,7 +679,7 @@ def start_aws_instance(o, instanceid):
     return logdata
 
 
-def get_aws_image(key, secret, region, imageid):
+def get_aws_image(key, secret, region, imageid, log):
     ec2 = boto3.client('ec2', region_name=region,
                          aws_access_key_id=key,
                          aws_secret_access_key=secret)
@@ -693,7 +695,7 @@ def get_aws_image(key, secret, region, imageid):
             ]
         )
     except Exception as e:
-        print("Error", e)
+        append_log(log, "Error", e)
     ec2 = None
     if len(amis["Images"]) > 0:
         return amis["Images"][0]
@@ -863,57 +865,60 @@ def update_cloud(clouds):
 
 
 def sync_cloud():
+    log = []
     # Process records that have been added to database that need to be pushed to cloud
     obj = CloudVPC.objects.all().exclude(last_sync=F('last_update')).filter(Q(cloudid=None) | Q(cloudid=""))
     if len(obj) > 0:
-        print("sync_cloud::cloud_vpc::push", obj)
-        os = create_aws_vpcs(obj)
+        append_log(log, "sync_cloud::cloud_vpc::push", obj)
+        os = create_aws_vpcs(obj, log)
     obj = CloudSubnet.objects.all().exclude(last_sync=F('last_update')).filter(Q(cloudid=None) | Q(cloudid=""))
     if len(obj) > 0:
-        print("sync_cloud::cloud_subnet::push", obj)
-        os = create_aws_subnets(obj)
+        append_log(log, "sync_cloud::cloud_subnet::push", obj)
+        os = create_aws_subnets(obj, log)
     obj = CloudSecurityGroup.objects.all().exclude(last_sync=F('last_update')).filter(Q(cloudid=None) | Q(cloudid=""))
     if len(obj) > 0:
-        print("sync_cloud::cloud_sg::push", obj)
-        os = create_aws_securitygroups(obj)
+        append_log(log, "sync_cloud::cloud_sg::push", obj)
+        os = create_aws_securitygroups(obj, log)
     obj = CloudInstance.objects.all().exclude(last_sync=F('last_update')).filter(Q(cloudid=None) | Q(cloudid=""))
     if len(obj) > 0:
-        print("sync_cloud::cloud_inst::push", obj)
-        os = create_aws_instances(obj)
+        append_log(log, "sync_cloud::cloud_inst::push", obj)
+        os = create_aws_instances(obj, log)
 
     # Process records that already exist in cloud that need to be updated
     obj = CloudVPC.objects.all().exclude(last_sync=F('last_update')).exclude(Q(cloudid=None) | Q(cloudid=""))
     if len(obj) > 0:
-        print("sync_cloud::cloud_vpc::update", obj)
+        append_log(log, "sync_cloud::cloud_vpc::update", obj)
         os = update_aws_vpcs(obj)
     obj = CloudSubnet.objects.all().exclude(last_sync=F('last_update')).exclude(Q(cloudid=None) | Q(cloudid=""))
     if len(obj) > 0:
-        print("sync_cloud::cloud_subnet::update", obj)
+        append_log(log, "sync_cloud::cloud_subnet::update", obj)
         os = update_aws_subnets(obj)
     obj = CloudSecurityGroup.objects.all().exclude(last_sync=F('last_update')).exclude(Q(cloudid=None) | Q(cloudid=""))
     if len(obj) > 0:
-        print("sync_cloud::cloud_sg::update", obj)
+        append_log(log, "sync_cloud::cloud_sg::update", obj)
         os = update_aws_securitygroups(obj)
     obj = CloudInstance.objects.all().exclude(last_sync=F('last_update')).exclude(Q(cloudid=None) | Q(cloudid=""))
     if len(obj) > 0:
-        print("sync_cloud::cloud_inst::update", obj)
+        append_log(log, "sync_cloud::cloud_inst::update", obj)
         os = update_aws_instances(obj)
 
     # See if any cloud accounts have been updated and need to be re-synced
     clouds1 = Cloud.objects.all().exclude(last_sync=F('last_update'))
-    print("sync_cloud::full_cloud_sync::phase1", clouds1)
+    append_log(log, "sync_cloud::full_cloud_sync::phase1", clouds1)
     update_cloud(clouds1)
 
     # Sync cloud accounts have been set to force refresh
     clouds2 = Cloud.objects.filter(force_rebuild=True)
-    print("sync_cloud::full_cloud_sync::phase2", clouds2)
+    append_log(log, "sync_cloud::full_cloud_sync::phase2", clouds2)
     update_cloud(clouds2)
 
     # Instance Automation
     instances = CloudInstance.objects.exclude(instanceautomation=None)
-    print("sync_cloud::instance_automation", instances)
-    instance_automation(instances)
+    append_log(log, "sync_cloud::instance_automation", instances)
+    instance_automation(instances, log)
     # print(clouds1, clouds2)
+
+    db_log("cloud_monitor", log)
 
 
 def run():

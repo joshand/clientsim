@@ -373,3 +373,16 @@ class AppEventViewSet(viewsets.ModelViewSet):
     queryset = AppEvent.objects.all().order_by('id')
     serializer_class = AppEventSerializer
 
+
+class TaskViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows System Tasks to be viewed.
+
+    retrieve:
+    Return a task.
+
+    list:
+    Return all tasks.
+    """
+    queryset = Task.objects.all().order_by('last_update')
+    serializer_class = TaskSerializer

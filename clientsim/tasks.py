@@ -11,6 +11,12 @@ def run_tasks():
         return None
 
     try:
+        import scripts.clean_tasks
+        scripts.clean_tasks.run()
+    except:
+        print("#### Exception starting scheduled job: clean_tasks")
+
+    try:
         import scripts.interface_monitor
         scripts.interface_monitor.run()
     except:
