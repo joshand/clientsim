@@ -72,14 +72,14 @@
 		"model": "client_sim.app",
 		"fields": {
 			"description": "CNN",
-			"url": "https://www.cnn.com"
+			"appurl": "https://www.cnn.com"
 		}
 	},
 	{
 		"model": "client_sim.app",
 		"fields": {
 			"description": "Youtube",
-			"url": "https://www.youtube.com"
+			"appurl": "https://www.youtube.com"
 		}
 	},
 	{
