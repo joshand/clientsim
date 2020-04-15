@@ -133,3 +133,4 @@ dmypy.json
 sources.txt
 tsocks.conf
 client_sim/migrations
+old/
