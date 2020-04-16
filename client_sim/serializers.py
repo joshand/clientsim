@@ -100,6 +100,13 @@ class InterfaceSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'url', 'name', 'macaddress')
 
 
+class BridgeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Bridge
+        fields = ('id', 'url', 'name', 'interface', 'description')
+        read_only_fields = ('id', 'url')
+
+
 class ContainerTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = ContainerType

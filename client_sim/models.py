@@ -531,6 +531,16 @@ class Interface(models.Model):
         return self.description + " (" + self.name + ")"
 
 
+class Bridge(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField("Bridge Name. Eg. br1", max_length=15, null=False, blank=False)
+    description = models.CharField("Bridge Description", max_length=100, blank=False, null=False)
+    interface = models.ForeignKey(Interface, on_delete=models.SET_NULL, null=True, blank=False, default=None)
+
+    def __str__(self):
+        return self.description + " (" + self.name + ")"
+
+
 class ContainerType(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100, blank=False, null=False)

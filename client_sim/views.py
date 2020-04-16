@@ -234,6 +234,20 @@ class InterfaceViewSet(viewsets.ModelViewSet):
     serializer_class = InterfaceSerializer
 
 
+class BridgeViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows Bridges to be viewed, edited or deleted.
+
+    retrieve:
+    Return a Bridge.
+
+    list:
+    Return all Bridges.
+    """
+    queryset = Bridge.objects.all().order_by('description')
+    serializer_class = BridgeSerializer
+
+
 class ContainerTypeViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows Container Types to be viewed, edited or deleted.
