@@ -12,6 +12,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from getmac import get_mac_address
 from client_sim.models import *
 from scripts.dblog import *
+import subprocess
 
 
 # def dolog(fn, step, *txt):
@@ -56,6 +57,21 @@ def detect_wireless(clean_interfaces):
     return wireless_interfaces
 
 
+def exec_cmd(bridge, cmdlist, log):
+    for l in cmdlist:
+        newl = l[:]
+        newl = newl.replace("{{interface}}", bridge.interface.name)
+        newl = newl.replace("{{bridgeinterface}}", bridge.name)
+        newl = newl.replace("{{bridgeip}}", bridge.ipaddress)
+        newl = newl.replace("{{bridgedg}}", bridge.gateway)
+        newl = newl.replace("{{vethinterface}}", "veth-" + bridge.name)
+        out = subprocess.Popen(newl.split(" "),
+                               stdout=subprocess.PIPE,
+                               stderr=subprocess.STDOUT)
+        stdout, stderr = out.communicate()
+        append_log(log, "create_bridge::exec_cmd", newl, stdout, stderr)
+
+
 def import_networks():
     log = []
     interfaces = get_interfaces()
@@ -92,6 +108,22 @@ def import_networks():
             n = Interface.objects.create(name=i, macaddress=m, description=i)
             n.save()
         # print(i, m)
+
+    bri = Bridge.objects.filter(is_configured=False)
+    for b in bri:
+        cmdlist = [
+            "brctl addbr {{bridgeinterface}}",
+            "ip link set {{bridgeinterface}} up",
+            "brctl addif {{bridgeinterface}} {{interface}}",
+            "ip addr add {{bridgeip}} dev {{bridgeinterface}}",
+            "ip route add default via {{bridgedg}} dev {{bridgeinterface}}",
+            "ip link add web-int type veth peer name {{vethinterface}}",
+            "brctl addif {{bridgeinterface}} {{vethinterface}}"
+        ]
+        exec_cmd(b, cmdlist, log)
+
+        b.is_configured = True
+        b.save()
 
     # print(eth, wls)
     db_log("interface_monitor", log)
