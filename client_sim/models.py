@@ -579,6 +579,8 @@ class Network(models.Model):
     def dockernetwork(self):
         if self.networktype.driver == "macvlan":
             return "macvlan" + str(self.vlan)
+        elif self.networktype.driver == "ipvlan":
+            return "ipvlan" + str(self.vlan)
         else:
             return "bridge"
 
