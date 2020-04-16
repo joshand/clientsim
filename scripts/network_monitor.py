@@ -1,5 +1,6 @@
 import sys
 import os
+import traceback
 import atexit
 import docker
 from docker import types
@@ -205,6 +206,7 @@ def sync_docker_networks():
         exc_type, exc_obj, exc_tb = sys.exc_info()
         fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
         append_log(log, "import_docker_nets_into_db", "error", e, exc_type, fname, exc_tb.tb_lineno)
+        append_log(log, traceback.format_exc())
 
     db_log("network_monitor", log)
 
