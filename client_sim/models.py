@@ -545,7 +545,7 @@ class Container(models.Model):
 
     def get_dockerfile(self):
         serversettings = ServerSetting.objects.all()
-        if serversettings > 0:
+        if len(serversettings) > 0:
             ss = serversettings[0]
             sip = ss["ipaddress"]
         else:
@@ -774,7 +774,7 @@ class Client(models.Model):
                 delaystring += "0 "
 
         serversettings = ServerSetting.objects.all()
-        if serversettings > 0:
+        if len(serversettings) > 0:
             ss = serversettings[0]
             sip = ss["ipaddress"]
         else:
