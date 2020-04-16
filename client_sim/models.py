@@ -560,7 +560,7 @@ class Network(models.Model):
     interface = models.ForeignKey(Interface, on_delete=models.SET_NULL, null=True, blank=False, default=None)
     networktype = models.ForeignKey(NetworkType, on_delete=models.SET_NULL, null=True)
     vlan = models.IntegerField(blank=True, null=False, default=0)
-    dot1q = models.BooleanField(default=False, editable=False)
+    dot1q = models.BooleanField(default=False, editable=True)
     subnet = models.CharField(max_length=18, null=True, default=None, blank=True)
     dg = models.CharField(max_length=15, null=True, default=None, blank=True)
     addrpool = models.CharField("Client Address Pool", max_length=18, null=True, default=None, blank=True)
