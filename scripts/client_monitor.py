@@ -82,10 +82,17 @@ def create_docker_containers(client, containers, log, delete_existing=False):
             c.save()
 
 
-def sync_container_ips(containers):
+def sync_container_ips(containers, log):
     client = docker.from_env()
     for c in containers:
-        newcli = client.containers.get(c.clientid)
+        try:
+            newcli = client.containers.get(c.clientid)
+        except:
+            append_log(log, "sync_docker::create_docker_containers::exception getting client id... clearing client id from db")
+            c.clientid = None
+            c.save()
+            return None
+
         ipaddr = newcli.attrs['NetworkSettings']['IPAddress']
         if ipaddr is None or ipaddr == "":
             ipaddr = newcli.attrs['NetworkSettings']['Networks'][c.network.dockernetwork()]['IPAddress']
@@ -115,7 +122,7 @@ def sync_docker_clients():
     create_docker_containers(client, conts, log, delete_existing=True)
 
     # Sync Container IPs
-    sync_container_ips(Client.objects.all())
+    sync_container_ips(Client.objects.all(), log)
 
     # Next, send script to client
     conts = Client.objects.filter(clientid__isnull=False)
