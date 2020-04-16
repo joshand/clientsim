@@ -44,8 +44,10 @@ def5adeaa128        none                null                local
 
 
 def dolog(fn, step, *txt):
-    l = Log.objects.create(function=fn, step=step, log=",".join(map(str, txt)))
-    l.save()
+    # Disabled to remove log table
+    pass
+    # l = Log.objects.create(function=fn, step=step, log=",".join(map(str, txt)))
+    # l.save()
 
 
 def fix_up_command(cmd):
@@ -480,25 +482,25 @@ class DashboardLicense(models.Model):
         return self.license
 
 
-class Log(models.Model):
-    dt = models.DateTimeField(auto_now=True)
-    function = models.CharField(max_length=100, blank=False, null=True, default=None)
-    step = models.CharField(max_length=100, blank=False, null=True, default=None)
-    log = models.TextField(blank=False, null=False)
-
-    def __str__(self):
-        if self.function:
-            fx = self.function
-        else:
-            fx = ""
-        if self.step:
-            st = self.step
-        else:
-            st = ""
-        return str(self.dt) + "::" + fx + "::" + st + "::" + self.log[0:20]
-
-    class Meta:
-        ordering = ['-dt']
+# class Log(models.Model):
+#     dt = models.DateTimeField(auto_now=True)
+#     function = models.CharField(max_length=100, blank=False, null=True, default=None)
+#     step = models.CharField(max_length=100, blank=False, null=True, default=None)
+#     log = models.TextField(blank=False, null=False)
+#
+#     def __str__(self):
+#         if self.function:
+#             fx = self.function
+#         else:
+#             fx = ""
+#         if self.step:
+#             st = self.step
+#         else:
+#             st = ""
+#         return str(self.dt) + "::" + fx + "::" + st + "::" + self.log[0:20]
+#
+#     class Meta:
+#         ordering = ['-dt']
 
 
 class NetworkType(models.Model):

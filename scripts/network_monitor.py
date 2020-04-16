@@ -43,28 +43,25 @@ def create_docker_nets(client, nets, log, delete_existing=False):
             try:
                 net = client.networks.get(n.networkid)
                 append_log(log, "rebuild_docker_network", n.networkid, net.name)
+                if net.name != "bridge":
+                    for c in net.containers:
+                        append_log(log, "stopping container", c)
+                        c.stop()
+                        # cli_restart.append(c)
+                        # c.pause()
+                    net.remove()
+                    n.networkid = None
+                    n.skip_sync = True
+                    n.force_rebuild = False
+                    n.save()
+                else:
+                    append_log(log, "rebuild_docker_network - cannot update 'bridge'; skipping")
+                    n.skip_sync = True
+                    n.force_rebuild = False
+                    n.save()
             except Exception as e:
                 append_log(log, "rebuild_docker_network::exception::network no longer exists?", e)
-                net = None
-
-            if not net:
                 n.networkid = None
-                n.skip_sync = True
-                n.force_rebuild = False
-                n.save()
-            elif net.name != "bridge":
-                for c in net.containers:
-                    append_log(log, "stopping container", c)
-                    c.stop()
-                    # cli_restart.append(c)
-                    # c.pause()
-                net.remove()
-                n.networkid = None
-                n.skip_sync = True
-                n.force_rebuild = False
-                n.save()
-            else:
-                append_log(log, "rebuild_docker_network - cannot update 'bridge'; skipping")
                 n.skip_sync = True
                 n.force_rebuild = False
                 n.save()
@@ -127,7 +124,13 @@ def sync_docker_networks():
     log = []
     # try:
     client = docker.from_env()
-    dnets = client.networks.list()
+    try:
+        dnets = client.networks.list()
+    except Exception as e:
+        append_log(log, "sync_docker_networks::exception getting Docker network list::is Docker installed and running?::", e)
+        db_log("network_monitor", log)
+        return ""
+
     append_log(log, "sync_docker_networks::full_docker_network_list::", dnets)
     # First, check to see if all relevant Docker networks exist in the database. If not, import them.
     for dn in dnets:

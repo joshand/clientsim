@@ -192,18 +192,18 @@ class DashboardLicenseViewSet(viewsets.ModelViewSet):
     serializer_class = DashboardLicenseSerializer
 
 
-class LogViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows Log entries to be viewed, edited or deleted.
-
-    retrieve:
-    Return a Log entry.
-
-    list:
-    Return all Log entries.
-    """
-    queryset = Log.objects.all().order_by('dt')
-    serializer_class = LogSerializer
+# class LogViewSet(viewsets.ModelViewSet):
+#     """
+#     API endpoint that allows Log entries to be viewed, edited or deleted.
+#
+#     retrieve:
+#     Return a Log entry.
+#
+#     list:
+#     Return all Log entries.
+#     """
+#     queryset = Log.objects.all().order_by('dt')
+#     serializer_class = LogSerializer
 
 
 class NetworkTypeViewSet(viewsets.ModelViewSet):

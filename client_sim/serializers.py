@@ -79,11 +79,11 @@ class DashboardLicenseSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'url')
 
 
-class LogSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Log
-        fields = ('id', 'url', 'dt', 'function', 'step', 'log')
-        read_only_fields = ('id', 'url')
+# class LogSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Log
+#         fields = ('id', 'url', 'dt', 'function', 'step', 'log')
+#         read_only_fields = ('id', 'url')
 
 
 class NetworkTypeSerializer(serializers.ModelSerializer):

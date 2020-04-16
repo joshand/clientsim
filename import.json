@@ -15,14 +15,40 @@
 	{
 		"model": "client_sim.networktype",
 		"fields": {
+			"driver": "ipvlan",
+			"driveropt": "{\"ipvlan_mode\": \"l2\"}",
+			"description": "IP VLAN (L2)"
+		}
+	},
+	{
+		"model": "client_sim.networktype",
+		"fields": {
 			"driver": "bridge",
-			"description": "Bridged Network"
+			"driveropt": null,
+			"description": "Interface Bridge"
+		}
+	},
+	{
+		"model": "client_sim.networktype",
+		"fields": {
+			"driver": "bridge",
+			"driveropt": null,
+			"description": "Default Docker Bridge"
+		}
+	},
+	{
+		"model": "client_sim.networktype",
+		"fields": {
+			"driver": "ipvlan",
+			"driveropt": "{\"ipvlan_mode\": \"l3\"}",
+			"description": "IP VLAN (L3)"
 		}
 	},
 	{
 		"model": "client_sim.networktype",
 		"fields": {
 			"driver": "macvlan",
+			"driveropt": null,
 			"description": "VLAN Interface"
 		}
 	},
@@ -111,6 +137,14 @@
 			"description": "International Network Connection",
 			"default_profile": false,
 			"tcdata": "tc qdisc del dev {{interface}}\r\ntc qdisc add dev {{interface}} root handle 1: tbf rate 256kbit buffer 1600 limit 3000\r\ntc qdisc add dev {{interface}} parent 1:1 handle 10: netem delay 200ms 40ms 25% loss 15.3% 25% duplicate 1% corrupt 0.1% reorder 5% 50%\r\ntc qdisc show dev {{interface}}"
+		}
+	},
+	{
+		"model": "client_sim.linkprofile",
+		"fields": {
+			"description": "Sample WiFi Connection",
+			"default_profile": false,
+			"tcdata": "ip link set {{interface}} down\r\nrm -f /var/run/wpa_supplicant/{{interface}}\r\nip link set {{interface}} up\r\necho $'ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev\\nupdate_config=1\\ncountry=US\\n\\nnetwork={\\n    ssid=\"Your-SSID-Here\"\\n    psk=\"Your-PSK-Here\"\\n    key_mgmt=WPA-PSK\\n}' > /tmp/{{interface}}.conf\r\nwpa_supplicant -B -c /tmp/{{interface}}.conf -i {{interface}}"
 		}
 	},
 	{
