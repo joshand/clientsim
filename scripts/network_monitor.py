@@ -128,7 +128,7 @@ def sync_docker_networks():
     # try:
     client = docker.from_env()
     dnets = client.networks.list()
-    append_log(log, "sync_docker_networks", dnets)
+    append_log(log, "sync_docker_networks::full_docker_network_list::", dnets)
     # First, check to see if all relevant Docker networks exist in the database. If not, import them.
     for dn in dnets:
         # print(dn.attrs)
@@ -161,6 +161,7 @@ def sync_docker_networks():
 
     # Next, check to see if there are any networks in database that do not exist in Docker
     nets = Network.objects.filter(networkid__isnull=True)
+    append_log(log, "sync_docker_networks::nets_in_db_not_in_docker::", nets)
     create_docker_nets(client, nets, log)
     # for n in nets:
     #     if n.addrpool:
@@ -188,7 +189,11 @@ def sync_docker_networks():
     #             n.save()
 
     # Last, see if any networks have been updated and need to be re-synced
-    nets = Network.objects.all().exclude(last_sync=F('last_update'))
+    nets1 = Network.objects.all().exclude(last_sync=F('last_update'))
+    append_log(log, "sync_docker_networks::nets_out_of_sync::", nets1)
+    nets2 = Network.objects.all().filter(force_rebuild=True)
+    append_log(log, "sync_docker_networks::force_rebuild::", nets2)
+    nets = nets1 + nets2
     create_docker_nets(client, nets, log, delete_existing=True)
     # for n in nets:
         # print(n, n.last_sync, n.last_update)
