@@ -547,7 +547,7 @@ class Container(models.Model):
         serversettings = ServerSetting.objects.all()
         if len(serversettings) > 0:
             ss = serversettings[0]
-            sip = ss["ipaddress"]
+            sip = ss.ipaddress
         else:
             sip = "127.0.0.1"
 
@@ -776,7 +776,7 @@ class Client(models.Model):
         serversettings = ServerSetting.objects.all()
         if len(serversettings) > 0:
             ss = serversettings[0]
-            sip = ss["ipaddress"]
+            sip = ss.ipaddress
         else:
             sip = "127.0.0.1"
 
