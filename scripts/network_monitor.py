@@ -41,7 +41,7 @@ def create_docker_nets(client, nets, log, delete_existing=False):
             # else:
             if n.interface.name:
                 netname = "macvlan" + str(n.vlan)
-                if n.interface.dot1q:
+                if n.dot1q:
                     netopt = {"parent": n.interface.name + "." + str(n.vlan)}
                 else:
                     netopt = {"parent": n.interface.name}
@@ -70,7 +70,7 @@ def create_docker_nets(client, nets, log, delete_existing=False):
         elif n.networktype.driver == "ipvlan":
             if n.interface.name:
                 netname = "ipvlan" + str(n.vlan)
-                if n.interface.dot1q:
+                if n.dot1q:
                     netopt = {"parent": n.interface.name + "." + str(n.vlan)}
                 else:
                     netopt = {"parent": n.interface.name}
