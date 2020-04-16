@@ -511,6 +511,16 @@ class NetworkType(models.Model):
         return self.description
 
 
+class LinkProfile(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    description = models.CharField("Link Profile Description", max_length=100, null=False, default=None)
+    default_profile = models.BooleanField(default=False, editable=False)
+    tcdata = models.TextField("Linux Config Commands (tc, iw, etc.)", null=True, blank=True, default=None)
+
+    def __str__(self):
+        return self.description
+
+
 class Interface(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=15, null=False, blank=False)
@@ -558,6 +568,7 @@ class Container(models.Model):
 class Network(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     interface = models.ForeignKey(Interface, on_delete=models.SET_NULL, null=True, blank=False, default=None)
+    linkprofile = models.ForeignKey(LinkProfile, verbose_name="Default Link Profile", on_delete=models.SET_NULL, null=True, blank=True, default=None)
     networktype = models.ForeignKey(NetworkType, on_delete=models.SET_NULL, null=True)
     vlan = models.IntegerField(blank=True, null=False, default=0)
     dot1q = models.BooleanField(default=False, editable=True)
@@ -602,7 +613,11 @@ class Network(models.Model):
             curevt = evt[0]
             return curevt.linkprofile.tcdata
         else:
-            pro = LinkProfile.objects.filter(default_profile=True)
+            if self.linkprofile:
+                pro = self.linkprofile
+            else:
+                pro = LinkProfile.objects.filter(default_profile=True)
+
             if len(pro) > 0:
                 curpro = pro[0]
                 return curpro.tcdata
@@ -840,16 +855,6 @@ def post_save_client(sender, instance=None, created=False, **kwargs):
 #         r = requests.post(url, json=data, headers=headers)
 #         dolog("post_save_client", "update_meraki_dashboard", "create_client", r.status_code, r.content.decode("utf-8"))
     post_save.connect(post_save_client, sender=Client)
-
-
-class LinkProfile(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    description = models.CharField("Link Profile Description", max_length=100, null=False, default=None)
-    default_profile = models.BooleanField(default=False, editable=False)
-    tcdata = models.TextField("Linux Config Commands (tc, iw, etc.)", null=True, blank=True, default=None)
-
-    def __str__(self):
-        return self.description
 
 
 class EventDay(models.Model):
