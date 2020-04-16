@@ -33,3 +33,5 @@
     python manage.py loaddata import.json
     sudo ./venv/bin/python manage.py runserver 127.0.0.1:8000     (note: if you want this to be reachable externally, use the actual IP address of your client)
     ```
+ 
+Navigate to http://127.0.0.1:8000/admin and log in.
