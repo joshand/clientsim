@@ -34,6 +34,19 @@ def create_docker_nets(client, nets, log, delete_existing=False):
         else:
             ipam_config = None
 
+        cli_restart = []
+        if n.force_rebuild:
+            append_log(log, "rebuild_docker_network", n.networkid)
+            net = client.networks.get(n.networkid)
+            for c in net.containers():
+                append_log(log, "stopping container", c)
+                cli_restart.append(c)
+                c.stop()
+            net.remove()
+            n.networkid = None
+            n.skip_sync = True
+            n.save()
+
         if n.networktype.driver == "macvlan":
             # if settings.TRUNK_INTERFACE == "":
             #     append_log(log, "create_docker_macvlan",
@@ -48,13 +61,6 @@ def create_docker_nets(client, nets, log, delete_existing=False):
 
                 if n.networktype.driveropt:
                     netopt = {**netopt, **json.loads(n.networktype.driveropt)}
-
-                if delete_existing:
-                    append_log(log, "resync_docker_network", n.networkid)
-                    client.networks.get(n.networkid).remove()
-                    n.networkid = None
-                    n.skip_sync = True
-                    n.save()
 
                 append_log(log, "create_docker_macvlan", netname, ipam_config, netopt)
                 dt = make_aware(datetime.datetime.now())
@@ -78,13 +84,6 @@ def create_docker_nets(client, nets, log, delete_existing=False):
                 if n.networktype.driveropt:
                     netopt = {**netopt, **json.loads(n.networktype.driveropt)}
 
-                if delete_existing:
-                    append_log(log, "resync_docker_network", n.networkid)
-                    client.networks.get(n.networkid).remove()
-                    n.networkid = None
-                    n.skip_sync = True
-                    n.save()
-
                 append_log(log, "create_docker_macvlan", netname, ipam_config, netopt)
                 dt = make_aware(datetime.datetime.now())
                 if ipam_config:
@@ -96,6 +95,11 @@ def create_docker_nets(client, nets, log, delete_existing=False):
                 n.last_update = dt
                 n.skip_sync = True
                 n.save()
+
+        for c in cli_restart:
+            append_log(log, "starting container", c)
+            c.start()
+
 
 def sync_docker_networks():
     log = []
@@ -163,7 +167,7 @@ def sync_docker_networks():
 
         # Last, see if any networks have been updated and need to be re-synced
         nets = Network.objects.all().exclude(last_sync=F('last_update'))
-        create_docker_nets(client, nets, log, delete_existing=True)
+        create_docker_nets(client, nets, log)
         # for n in nets:
             # print(n, n.last_sync, n.last_update)
             # client.networks.

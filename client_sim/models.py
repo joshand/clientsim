@@ -578,6 +578,7 @@ class Network(models.Model):
     networkid = models.CharField("Docker Network ID", max_length=64, null=True, default=None, blank=True)
     description = models.CharField("Network Description", max_length=100, blank=False, null=False)
     active = models.BooleanField(default=True, editable=True)
+    force_rebuild = models.BooleanField("Force Rebuild of Docker Network", default=False, editable=True)
     force_script = models.BooleanField("Force Impairment Script Update", default=False, editable=True)
     skip_sync = models.BooleanField(default=False, editable=False)
     last_update = models.DateTimeField(default=django.utils.timezone.now)
