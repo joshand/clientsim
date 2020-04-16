@@ -65,7 +65,7 @@ def detect_wireless(clean_interfaces):
 def exec_cmd(bridge, cmdlist, log):
     for l in cmdlist:
         newl = l[:]
-        if not bridge.gateway and "{{bridgedg}}" in newl:
+        if not bridge.gateway and newl.find("{{bridgedg}}") >= 0:
             continue
 
         newl = newl.replace("{{interface}}", bridge.interface.name)
