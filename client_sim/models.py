@@ -504,6 +504,7 @@ class Log(models.Model):
 class NetworkType(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     driver = models.CharField("Docker Network Driver", max_length=20, blank=False, null=False)
+    driveropt = models.CharField("Base Driver Option (JSON format)", max_length=20, blank=True, null=True, default=None)
     description = models.CharField("Network Type Description", max_length=100, blank=False, null=False)
 
     def __str__(self):
@@ -559,6 +560,7 @@ class Network(models.Model):
     interface = models.ForeignKey(Interface, on_delete=models.SET_NULL, null=True, blank=False, default=None)
     networktype = models.ForeignKey(NetworkType, on_delete=models.SET_NULL, null=True)
     vlan = models.IntegerField(blank=True, null=False, default=0)
+    dot1q = models.BooleanField(default=False, editable=False)
     subnet = models.CharField(max_length=18, null=True, default=None, blank=True)
     dg = models.CharField(max_length=15, null=True, default=None, blank=True)
     addrpool = models.CharField("Client Address Pool", max_length=18, null=True, default=None, blank=True)

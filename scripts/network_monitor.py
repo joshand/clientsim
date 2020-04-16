@@ -35,12 +35,20 @@ def create_docker_nets(client, nets, log, delete_existing=False):
             ipam_config = None
 
         if n.networktype.driver == "macvlan":
-            if settings.TRUNK_INTERFACE == "":
-                append_log(log, "create_docker_macvlan",
-                      "request to connect macvlan, but no trunk interface defined")
-            else:
+            # if settings.TRUNK_INTERFACE == "":
+            #     append_log(log, "create_docker_macvlan",
+            #           "request to connect macvlan, but no trunk interface defined")
+            # else:
+            if n.interface.name:
                 netname = "macvlan" + str(n.vlan)
-                netopt = {"parent": settings.TRUNK_INTERFACE + "." + str(n.vlan)}
+                if n.interface.dot1q:
+                    netopt = {"parent": n.interface.name + "." + str(n.vlan)}
+                else:
+                    netopt = {"parent": n.interface.name}
+
+                if n.networktype.driveropt:
+                    netopt = {**netopt, **json.loads(n.networktype.driveropt)}
+
                 if delete_existing:
                     append_log(log, "resync_docker_network", n.networkid)
                     client.networks.get(n.networkid).remove()
@@ -59,7 +67,35 @@ def create_docker_nets(client, nets, log, delete_existing=False):
                 n.last_update = dt
                 n.skip_sync = True
                 n.save()
+        elif n.networktype.driver == "ipvlan":
+            if n.interface.name:
+                netname = "ipvlan" + str(n.vlan)
+                if n.interface.dot1q:
+                    netopt = {"parent": n.interface.name + "." + str(n.vlan)}
+                else:
+                    netopt = {"parent": n.interface.name}
 
+                if n.networktype.driveropt:
+                    netopt = {**netopt, **json.loads(n.networktype.driveropt)}
+
+                if delete_existing:
+                    append_log(log, "resync_docker_network", n.networkid)
+                    client.networks.get(n.networkid).remove()
+                    n.networkid = None
+                    n.skip_sync = True
+                    n.save()
+
+                append_log(log, "create_docker_macvlan", netname, ipam_config, netopt)
+                dt = make_aware(datetime.datetime.now())
+                if ipam_config:
+                    newnet = client.networks.create(netname, driver="macvlan", ipam=ipam_config, options=netopt)
+                else:
+                    newnet = client.networks.create(netname, driver="macvlan", options=netopt)
+                n.networkid = newnet.id
+                n.last_sync = dt
+                n.last_update = dt
+                n.skip_sync = True
+                n.save()
 
 def sync_docker_networks():
     log = []
