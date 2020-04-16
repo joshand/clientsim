@@ -65,6 +65,9 @@ def detect_wireless(clean_interfaces):
 def exec_cmd(bridge, cmdlist, log):
     for l in cmdlist:
         newl = l[:]
+        if not bridge.gateway and "{{bridgedg}}" in newl:
+            continue
+
         newl = newl.replace("{{interface}}", bridge.interface.name)
         newl = newl.replace("{{bridgeinterface}}", bridge.name)
         newl = newl.replace("{{bridgeip}}", bridge.ipaddress)
@@ -123,7 +126,7 @@ def import_networks():
             "iw dev {{interface}} set 4addr on",
             "brctl addif {{bridgeinterface}} {{interface}}",
             "ip addr add {{bridgeip}} dev {{bridgeinterface}}",
-            # "ip route add default via {{bridgedg}} dev {{bridgeinterface}}",
+            "ip route add default via {{bridgedg}} dev {{bridgeinterface}}",
             "ip link add {{vethint}} type veth peer name {{vethext}}",
             "brctl addif {{bridgeinterface}} {{vethext}}"
         ]
