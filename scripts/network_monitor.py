@@ -1,3 +1,5 @@
+import sys
+import os
 import atexit
 import docker
 from docker import types
@@ -35,7 +37,7 @@ def create_docker_nets(client, nets, log, delete_existing=False):
             ipam_config = None
 
         cli_restart = []
-        if n.force_rebuild:
+        if n.force_rebuild or delete_existing:
             append_log(log, "rebuild_docker_network", n.networkid)
             net = client.networks.get(n.networkid)
             for c in net.containers():
@@ -168,7 +170,7 @@ def sync_docker_networks():
 
         # Last, see if any networks have been updated and need to be re-synced
         nets = Network.objects.all().exclude(last_sync=F('last_update'))
-        create_docker_nets(client, nets, log)
+        create_docker_nets(client, nets, log, delete_existing=True)
         # for n in nets:
             # print(n, n.last_sync, n.last_update)
             # client.networks.
@@ -200,7 +202,9 @@ def sync_docker_networks():
                 n.save()
 
     except Exception as e:
-        append_log(log, "import_docker_nets_into_db", "error", e)
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        append_log(log, "import_docker_nets_into_db", "error", e, exc_type, fname, exc_tb.tb_lineno)
 
     db_log("network_monitor", log)
 
