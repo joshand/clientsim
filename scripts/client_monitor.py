@@ -33,37 +33,40 @@ def create_docker_containers(client, containers, log, delete_existing=False):
             c.skip_sync = True
             c.save()
 
-        if c.container.containertype.name == "PUBLISHED":
-            newcli = client.containers.run(c.container.path, c.container.cmd, network=c.network.dockernetwork(),
-                                           mac_address=c.macaddress, hostname=c.hostname, name=c.dockercontainername(),
-                                           detach=True, tty=True, remove=True)
-            # dolog("sync_docker_containers", "create_new_container_published", newcli)
-            cmdout += "New Published Container " + str(newcli) + "\n"
-        elif c.container.containertype.name == "DOCKERFILE":
-            df = str(c.container.get_dockerfile()) + "\n"
-            f = BytesIO(df.encode('utf-8'))
-            try:
-                client2 = docker.APIClient(base_url='unix://var/run/docker.sock')
-                response = [line for line in client2.build(
-                    fileobj=f, rm=True, tag=c.container.buildcontainername
-                )]
-                # newimg = client.images.build(fileobj=f, custom_context=True, tag=c.container.buildcontainername)
-                # dolog("sync_docker_containers", "create_new_image", "success", response)
-                cmdout += "New Build Image " + str(response) + "\n"
-            except Exception as e:
-                # dolog("sync_docker_containers", "create_new_image", "error", e)
-                cmdout += "Build Image Exception " + str(e) + "\n"
-
-            try:
-                # print(c.container.buildcontainername, c.container.cmd, c.network.dockernetwork(), c.macaddress, c.hostname, c.dockercontainername())
-                newcli = client.containers.run(c.container.buildcontainername, c.container.cmd, network=c.network.dockernetwork(),
+        try:
+            if c.container.containertype.name == "PUBLISHED":
+                newcli = client.containers.run(c.container.path, c.container.cmd, network=c.network.dockernetwork(),
                                                mac_address=c.macaddress, hostname=c.hostname, name=c.dockercontainername(),
                                                detach=True, tty=True, remove=True)
-                # dolog("sync_docker_containers", "create_new_container_built", "success", newcli)
-                cmdout += "New Build Container " + str(newcli) + "\n"
-            except Exception as e:
-                # dolog("sync_docker_containers", "create_new_container_built", "error", e)
-                cmdout += "Build Container Exception " + str(e) + "\n"
+                # dolog("sync_docker_containers", "create_new_container_published", newcli)
+                cmdout += "New Published Container " + str(newcli) + "\n"
+            elif c.container.containertype.name == "DOCKERFILE":
+                df = str(c.container.get_dockerfile()) + "\n"
+                f = BytesIO(df.encode('utf-8'))
+                try:
+                    client2 = docker.APIClient(base_url='unix://var/run/docker.sock')
+                    response = [line for line in client2.build(
+                        fileobj=f, rm=True, tag=c.container.buildcontainername
+                    )]
+                    # newimg = client.images.build(fileobj=f, custom_context=True, tag=c.container.buildcontainername)
+                    # dolog("sync_docker_containers", "create_new_image", "success", response)
+                    cmdout += "New Build Image " + str(response) + "\n"
+                except Exception as e:
+                    # dolog("sync_docker_containers", "create_new_image", "error", e)
+                    cmdout += "Build Image Exception " + str(e) + "\n"
+
+                try:
+                    # print(c.container.buildcontainername, c.container.cmd, c.network.dockernetwork(), c.macaddress, c.hostname, c.dockercontainername())
+                    newcli = client.containers.run(c.container.buildcontainername, c.container.cmd, network=c.network.dockernetwork(),
+                                                   mac_address=c.macaddress, hostname=c.hostname, name=c.dockercontainername(),
+                                                   detach=True, tty=True, remove=True)
+                    # dolog("sync_docker_containers", "create_new_container_built", "success", newcli)
+                    cmdout += "New Build Container " + str(newcli) + "\n"
+                except Exception as e:
+                    # dolog("sync_docker_containers", "create_new_container_built", "error", e)
+                    cmdout += "Build Container Exception " + str(e) + "\n"
+        except Exception as e:
+            append_log(log, "sync_docker::create_docker_containers::exception re-creating container...", e)
 
         # print(c, c.container.path, c.container.cmd, newcli)
 
