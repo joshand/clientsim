@@ -504,7 +504,7 @@ class Log(models.Model):
 class NetworkType(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     driver = models.CharField("Docker Network Driver", max_length=20, blank=False, null=False)
-    driveropt = models.CharField("Base Driver Option (JSON format)", max_length=20, blank=True, null=True, default=None)
+    driveropt = models.CharField("Base Driver Option (JSON format)", max_length=100, blank=True, null=True, default=None)
     description = models.CharField("Network Type Description", max_length=100, blank=False, null=False)
 
     def __str__(self):

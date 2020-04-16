@@ -66,6 +66,10 @@ class InstanceAutomationAdmin(admin.ModelAdmin):
     readonly_fields = ('getvariables', )
 
 
+class InterfaceAdmin(admin.ModelAdmin):
+    readonly_fields = ('name', 'macaddress')
+
+
 admin.site.register(Network, NetworkAdmin)
 admin.site.register(Client, ClientAdmin)
 admin.site.register(Upload, UploadAdmin)
@@ -76,6 +80,7 @@ admin.site.register(CloudInstance, CloudInstanceAdmin)
 admin.site.register(CloudSecurityGroup, CloudSecurityGroupAdmin)
 admin.site.register(CloudImage, CloudImageAdmin)
 admin.site.register(InstanceAutomation, InstanceAutomationAdmin)
+admin.site.register(Interface, InterfaceAdmin)
 # admin.site.register(Network)
 # admin.site.register(Client)
 # admin.site.register(Upload)
@@ -89,7 +94,7 @@ admin.site.register(EventDay)
 admin.site.register(LinkProfile)
 admin.site.register(LinkEvent)
 admin.site.register(Log)
-admin.site.register(Interface)
+# admin.site.register(Interface)
 admin.site.register(App)
 admin.site.register(AppProfile)
 admin.site.register(AppEvent)

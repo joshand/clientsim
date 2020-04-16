@@ -97,7 +97,7 @@ class InterfaceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Interface
         fields = ('id', 'url', 'name', 'macaddress', 'description')
-        read_only_fields = ('id', 'url')
+        read_only_fields = ('id', 'url', 'name', 'macaddress')
 
 
 class ContainerTypeSerializer(serializers.ModelSerializer):
