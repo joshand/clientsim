@@ -47,7 +47,10 @@ def create_docker_nets(client, nets, log, delete_existing=False):
                 net = None
 
             if not net:
-                pass
+                n.networkid = None
+                n.skip_sync = True
+                n.force_rebuild = False
+                n.save()
             elif net.name != "bridge":
                 for c in net.containers:
                     append_log(log, "stopping container", c)
@@ -61,6 +64,9 @@ def create_docker_nets(client, nets, log, delete_existing=False):
                 n.save()
             else:
                 append_log(log, "rebuild_docker_network - cannot update 'bridge'; skipping")
+                n.skip_sync = True
+                n.force_rebuild = False
+                n.save()
 
         if n.networktype.driver == "macvlan":
             # if settings.TRUNK_INTERFACE == "":
