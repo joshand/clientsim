@@ -189,11 +189,11 @@ def sync_docker_networks():
     #             n.save()
 
     # Last, see if any networks have been updated and need to be re-synced
-    nets1 = Network.objects.all().exclude(last_sync=F('last_update'))
-    append_log(log, "sync_docker_networks::nets_out_of_sync::", nets1)
-    nets2 = Network.objects.all().filter(force_rebuild=True)
-    append_log(log, "sync_docker_networks::force_rebuild::", nets2)
-    nets = nets1 + nets2
+    nets = Network.objects.all().exclude(last_sync=F('last_update'))
+    append_log(log, "sync_docker_networks::nets_out_of_sync::", nets)
+    create_docker_nets(client, nets, log, delete_existing=True)
+    nets = Network.objects.all().filter(force_rebuild=True)
+    append_log(log, "sync_docker_networks::force_rebuild::", nets)
     create_docker_nets(client, nets, log, delete_existing=True)
     # for n in nets:
         # print(n, n.last_sync, n.last_update)
