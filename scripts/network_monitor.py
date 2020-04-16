@@ -125,106 +125,106 @@ def create_docker_nets(client, nets, log, delete_existing=False):
 
 def sync_docker_networks():
     log = []
-    try:
-        client = docker.from_env()
-        dnets = client.networks.list()
-        append_log(log, "sync_docker_networks", dnets)
-        # First, check to see if all relevant Docker networks exist in the database. If not, import them.
-        for dn in dnets:
-            # print(dn.attrs)
-            drivers = NetworkType.objects.filter(driver__iexact=dn.attrs["Driver"])
-            nets = Network.objects.filter(networkid__iexact=dn.id)
-            if len(nets) <= 0 and len(drivers) > 0:
-                if dn.name == "bridge":
-                    newname = "Default Docker Bridge"
-                    newint = dn.attrs["Options"]["com.docker.network.bridge.name"]
-                    ipamcfg = dn.attrs.get("IPAM", {}).get("Config", {})[0]
-                    newsubnet = ipamcfg.get("Subnet", None)
-                    newgw = None
-                    newrange = None
-                else:
-                    newname = dn.name
-                    newint = dn.attrs["Options"]["parent"].split(".")[0]
-                    ipamcfg = dn.attrs.get("IPAM", {}).get("Config", {})[0]
-                    newsubnet = ipamcfg.get("Subnet", None)
-                    newgw = ipamcfg.get("Gateway", None)
-                    newrange = ipamcfg.get("IPRange", None)
+    # try:
+    client = docker.from_env()
+    dnets = client.networks.list()
+    append_log(log, "sync_docker_networks", dnets)
+    # First, check to see if all relevant Docker networks exist in the database. If not, import them.
+    for dn in dnets:
+        # print(dn.attrs)
+        drivers = NetworkType.objects.filter(driver__iexact=dn.attrs["Driver"])
+        nets = Network.objects.filter(networkid__iexact=dn.id)
+        if len(nets) <= 0 and len(drivers) > 0:
+            if dn.name == "bridge":
+                newname = "Default Docker Bridge"
+                newint = dn.attrs["Options"]["com.docker.network.bridge.name"]
+                ipamcfg = dn.attrs.get("IPAM", {}).get("Config", {})[0]
+                newsubnet = ipamcfg.get("Subnet", None)
+                newgw = None
+                newrange = None
+            else:
+                newname = dn.name
+                newint = dn.attrs["Options"]["parent"].split(".")[0]
+                ipamcfg = dn.attrs.get("IPAM", {}).get("Config", {})[0]
+                newsubnet = ipamcfg.get("Subnet", None)
+                newgw = ipamcfg.get("Gateway", None)
+                newrange = ipamcfg.get("IPRange", None)
 
-                intid = Interface.objects.filter(name__iexact=newint)
-                if intid:
-                    append_log(log, "import_docker_nets_into_db", dn.id, drivers[0], newname, newsubnet, newgw, newrange, intid[0])
-                    dt = make_aware(datetime.datetime.now())
-                    n = Network.objects.create(networkid=dn.id, networktype=drivers[0], description=newname, interface=intid[0], subnet=newsubnet, dg=newgw, addrpool=newrange, last_sync=dt, last_update=dt)
-                    n.save()
-                else:
-                    append_log(log, "import_docker_nets_into_db", dn.id, drivers[0], newname, newsubnet, newgw, newrange, newint, "Unable to resolve interface name")
-
-        # Next, check to see if there are any networks in database that do not exist in Docker
-        nets = Network.objects.filter(networkid__isnull=True)
-        create_docker_nets(client, nets, log)
-        # for n in nets:
-        #     if n.addrpool:
-        #         ipam_pool = docker.types.IPAMPool(subnet=n.subnet, gateway=n.dg, iprange=n.addrpool)
-        #         ipam_config = docker.types.IPAMConfig(pool_configs=[ipam_pool])
-        #     elif n.dg and n.subnet:
-        #         ipam_pool = docker.types.IPAMPool(subnet=n.subnet, gateway=n.dg)
-        #         ipam_config = docker.types.IPAMConfig(pool_configs=[ipam_pool])
-        #     else:
-        #         ipam_config = None
-        #
-        #     if n.networktype.driver == "macvlan":
-        #         if settings.TRUNK_INTERFACE == "":
-        #             dolog("sync_docker_networks", "create_docker_macvlan", "request to connect macvlan, but no trunk interface defined")
-        #         else:
-        #             netname = "macvlan" + str(n.vlan)
-        #             netopt = {"parent": settings.TRUNK_INTERFACE + "." + str(n.vlan)}
-        #             dolog("sync_docker_networks", "create_docker_macvlan", netname, ipam_config, netopt)
-        #             dt = datetime.datetime.now()
-        #             if ipam_config:
-        #                 newnet = client.networks.create(netname, driver="macvlan", ipam=ipam_config, options=netopt, last_sync=dt, last_update=dt)
-        #             else:
-        #                 newnet = client.networks.create(netname, driver="macvlan", options=netopt, last_sync=dt, last_update=dt)
-        #             n.networkid = newnet.id
-        #             n.save()
-
-        # Last, see if any networks have been updated and need to be re-synced
-        nets = Network.objects.all().exclude(last_sync=F('last_update'))
-        create_docker_nets(client, nets, log, delete_existing=True)
-        # for n in nets:
-            # print(n, n.last_sync, n.last_update)
-            # client.networks.
-            # I think containers have to be detached before deleting...
-
-        # Next, check for Link Impairment script
-        nets = Network.objects.filter(networkid__isnull=False)
-        for n in nets:
-            if (str(n.last_deployed_hash) != str(n.networkimpairmentscripthash())) or n.force_script:
-                n.force_script = False
-                n.skip_sync = True
+            intid = Interface.objects.filter(name__iexact=newint)
+            if intid:
+                append_log(log, "import_docker_nets_into_db", dn.id, drivers[0], newname, newsubnet, newgw, newrange, intid[0])
+                dt = make_aware(datetime.datetime.now())
+                n = Network.objects.create(networkid=dn.id, networktype=drivers[0], description=newname, interface=intid[0], subnet=newsubnet, dg=newgw, addrpool=newrange, last_sync=dt, last_update=dt)
                 n.save()
+            else:
+                append_log(log, "import_docker_nets_into_db", dn.id, drivers[0], newname, newsubnet, newgw, newrange, newint, "Unable to resolve interface name")
 
-                s = n.networkimpairmentscript()
-                # print(s)
-                if s:
-                    lines = s.split("\r\n")
-                    for l in lines:
-                        # print("****", l) #{{interface}}
-                        newl = l.replace("{{interface}}", n.hostnetwork())
-                        out = subprocess.Popen(newl.split(" "),
-                                               stdout=subprocess.PIPE,
-                                               stderr=subprocess.STDOUT)
-                        stdout, stderr = out.communicate()
-                        append_log(log, "apply_impairment_script", newl, stdout, stderr)
+    # Next, check to see if there are any networks in database that do not exist in Docker
+    nets = Network.objects.filter(networkid__isnull=True)
+    create_docker_nets(client, nets, log)
+    # for n in nets:
+    #     if n.addrpool:
+    #         ipam_pool = docker.types.IPAMPool(subnet=n.subnet, gateway=n.dg, iprange=n.addrpool)
+    #         ipam_config = docker.types.IPAMConfig(pool_configs=[ipam_pool])
+    #     elif n.dg and n.subnet:
+    #         ipam_pool = docker.types.IPAMPool(subnet=n.subnet, gateway=n.dg)
+    #         ipam_config = docker.types.IPAMConfig(pool_configs=[ipam_pool])
+    #     else:
+    #         ipam_config = None
+    #
+    #     if n.networktype.driver == "macvlan":
+    #         if settings.TRUNK_INTERFACE == "":
+    #             dolog("sync_docker_networks", "create_docker_macvlan", "request to connect macvlan, but no trunk interface defined")
+    #         else:
+    #             netname = "macvlan" + str(n.vlan)
+    #             netopt = {"parent": settings.TRUNK_INTERFACE + "." + str(n.vlan)}
+    #             dolog("sync_docker_networks", "create_docker_macvlan", netname, ipam_config, netopt)
+    #             dt = datetime.datetime.now()
+    #             if ipam_config:
+    #                 newnet = client.networks.create(netname, driver="macvlan", ipam=ipam_config, options=netopt, last_sync=dt, last_update=dt)
+    #             else:
+    #                 newnet = client.networks.create(netname, driver="macvlan", options=netopt, last_sync=dt, last_update=dt)
+    #             n.networkid = newnet.id
+    #             n.save()
 
-                n.last_deployed_hash = n.networkimpairmentscripthash()
-                n.skip_sync = True
-                n.save()
+    # Last, see if any networks have been updated and need to be re-synced
+    nets = Network.objects.all().exclude(last_sync=F('last_update'))
+    create_docker_nets(client, nets, log, delete_existing=True)
+    # for n in nets:
+        # print(n, n.last_sync, n.last_update)
+        # client.networks.
+        # I think containers have to be detached before deleting...
 
-    except Exception as e:
-        exc_type, exc_obj, exc_tb = sys.exc_info()
-        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-        append_log(log, "import_docker_nets_into_db", "error", e, exc_type, fname, exc_tb.tb_lineno)
-        append_log(log, traceback.format_exc())
+    # Next, check for Link Impairment script
+    nets = Network.objects.filter(networkid__isnull=False)
+    for n in nets:
+        if (str(n.last_deployed_hash) != str(n.networkimpairmentscripthash())) or n.force_script:
+            n.force_script = False
+            n.skip_sync = True
+            n.save()
+
+            s = n.networkimpairmentscript()
+            # print(s)
+            if s:
+                lines = s.split("\r\n")
+                for l in lines:
+                    # print("****", l) #{{interface}}
+                    newl = l.replace("{{interface}}", n.hostnetwork())
+                    out = subprocess.Popen(newl.split(" "),
+                                           stdout=subprocess.PIPE,
+                                           stderr=subprocess.STDOUT)
+                    stdout, stderr = out.communicate()
+                    append_log(log, "apply_impairment_script", newl, stdout, stderr)
+
+            n.last_deployed_hash = n.networkimpairmentscripthash()
+            n.skip_sync = True
+            n.save()
+
+    # except Exception as e:
+    #     exc_type, exc_obj, exc_tb = sys.exc_info()
+    #     fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+    #     append_log(log, "import_docker_nets_into_db", "error", e, exc_type, fname, exc_tb.tb_lineno)
+    #     append_log(log, traceback.format_exc())
 
     db_log("network_monitor", log)
 
