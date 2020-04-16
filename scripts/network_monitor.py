@@ -39,9 +39,16 @@ def create_docker_nets(client, nets, log, delete_existing=False):
 
         # cli_restart = []
         if n.force_rebuild or delete_existing:
-            net = client.networks.get(n.networkid)
-            append_log(log, "rebuild_docker_network", n.networkid, net.name)
-            if net.name != "bridge":
+            try:
+                net = client.networks.get(n.networkid)
+                append_log(log, "rebuild_docker_network", n.networkid, net.name)
+            except Exception as e:
+                append_log(log, "rebuild_docker_network::exception::network no longer exists?", e)
+                net = None
+
+            if not net:
+                pass
+            elif net.name != "bridge":
                 for c in net.containers:
                     append_log(log, "stopping container", c)
                     c.stop()
