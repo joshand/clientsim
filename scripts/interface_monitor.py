@@ -71,7 +71,8 @@ def exec_cmd(bridge, cmdlist, log):
         newl = newl.replace("{{interface}}", bridge.interface.name)
         newl = newl.replace("{{bridgeinterface}}", bridge.name)
         newl = newl.replace("{{bridgeip}}", bridge.ipaddress)
-        newl = newl.replace("{{bridgedg}}", bridge.gateway)
+        if bridge.gateway:
+            newl = newl.replace("{{bridgedg}}", bridge.gateway)
         newl = newl.replace("{{vethint}}", bridge.name + "-int")
         newl = newl.replace("{{vethext}}", bridge.name + "-ext")
         out = subprocess.Popen(newl.split(" "),
