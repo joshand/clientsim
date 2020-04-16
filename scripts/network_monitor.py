@@ -45,6 +45,7 @@ def create_docker_nets(client, nets, log, delete_existing=False):
             net.remove()
             n.networkid = None
             n.skip_sync = True
+            n.force_rebuild = False
             n.save()
 
         if n.networktype.driver == "macvlan":
