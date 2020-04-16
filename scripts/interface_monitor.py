@@ -20,8 +20,13 @@ import subprocess
 #     l.save()
 
 
-def get_interfaces():
-    interfaces = os.listdir('/sys/class/net')
+def get_interfaces(log):
+    try:
+        interfaces = os.listdir('/sys/class/net')
+    except Exception as e:
+        append_log(log, "get_interfaces::unable to list /sys/class/net. probably not linux.", e)
+        interfaces = []
+
     return interfaces
 
 
@@ -64,7 +69,8 @@ def exec_cmd(bridge, cmdlist, log):
         newl = newl.replace("{{bridgeinterface}}", bridge.name)
         newl = newl.replace("{{bridgeip}}", bridge.ipaddress)
         newl = newl.replace("{{bridgedg}}", bridge.gateway)
-        newl = newl.replace("{{vethinterface}}", "veth-" + bridge.name)
+        newl = newl.replace("{{vethint}}", bridge.name + "-int")
+        newl = newl.replace("{{vethext}}", bridge.name + "-ext")
         out = subprocess.Popen(newl.split(" "),
                                stdout=subprocess.PIPE,
                                stderr=subprocess.STDOUT)
@@ -74,7 +80,7 @@ def exec_cmd(bridge, cmdlist, log):
 
 def import_networks():
     log = []
-    interfaces = get_interfaces()
+    interfaces = get_interfaces(log)
     clean_interfaces = detect_virtual_interfaces(interfaces)
     eth = detect_ethernet(clean_interfaces)
     wls = detect_wireless(clean_interfaces)
@@ -114,11 +120,12 @@ def import_networks():
         cmdlist = [
             "brctl addbr {{bridgeinterface}}",
             "ip link set {{bridgeinterface}} up",
+            "iw dev {{interface}} set 4addr on",
             "brctl addif {{bridgeinterface}} {{interface}}",
             "ip addr add {{bridgeip}} dev {{bridgeinterface}}",
-            "ip route add default via {{bridgedg}} dev {{bridgeinterface}}",
-            "ip link add web-int type veth peer name {{vethinterface}}",
-            "brctl addif {{bridgeinterface}} {{vethinterface}}"
+            # "ip route add default via {{bridgedg}} dev {{bridgeinterface}}",
+            "ip link add {{vethint}} type veth peer name {{vethext}}",
+            "brctl addif {{bridgeinterface}} {{vethext}}"
         ]
         exec_cmd(b, cmdlist, log)
 

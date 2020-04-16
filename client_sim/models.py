@@ -535,8 +535,8 @@ class Bridge(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField("Bridge Name. Eg. br1", max_length=15, null=False, blank=False)
     description = models.CharField("Bridge Description", max_length=100, blank=False, null=False)
-    ipaddress = models.CharField("Bridge IP Address (with mask). Eg. 1.1.1.1/24", max_length=20, blank=False, null=False, default="192.168.1.2/24")
-    gateway = models.CharField("Bridge Default Gateway", max_length=20, blank=False, null=False, default="192.168.1.1")
+    ipaddress = models.CharField("Bridge IP Address (with mask). Eg. 192.168.1.2/24", max_length=20, blank=False, null=False, default="192.168.1.2/24")
+    gateway = models.CharField("Bridge Default Gateway", max_length=20, blank=True, null=True, default=None)
     interface = models.ForeignKey(Interface, on_delete=models.SET_NULL, null=True, blank=False, default=None)
     is_configured = models.BooleanField(default=False, editable=False)
 
