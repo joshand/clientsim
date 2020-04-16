@@ -842,7 +842,7 @@ class LinkProfile(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     description = models.CharField("Link Profile Description", max_length=100, null=False, default=None)
     default_profile = models.BooleanField(default=False, editable=False)
-    tcdata = models.TextField("Linux TC Commands", null=True, blank=True, default=None)
+    tcdata = models.TextField("Linux Config Commands (tc, iw, etc.)", null=True, blank=True, default=None)
 
     def __str__(self):
         return self.description
