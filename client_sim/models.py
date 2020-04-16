@@ -614,14 +614,12 @@ class Network(models.Model):
             return curevt.linkprofile.tcdata
         else:
             if self.linkprofile:
-                pro = self.linkprofile
+                curpro = self.linkprofile
             else:
                 pro = LinkProfile.objects.filter(default_profile=True)
-
-            if len(pro) > 0:
                 curpro = pro[0]
-                return curpro.tcdata
-            return ""
+
+            return curpro.tcdata
 
     def networkimpairmentscripthash(self):
         return hashlib.md5(self.networkimpairmentscript().encode("utf-8")).hexdigest()
