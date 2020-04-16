@@ -40,13 +40,12 @@ def create_docker_nets(client, nets, log, delete_existing=False):
         cli_restart = []
         if n.force_rebuild or delete_existing:
             append_log(log, "rebuild_docker_network", n.networkid)
-            nets = client.networks.get(n.networkid)
-            for net in nets:
-                for c in net.containers():
-                    append_log(log, "stopping container", c)
-                    cli_restart.append(c)
-                    c.stop()
-                net.remove()
+            net = client.networks.get(n.networkid)
+            for c in net.containers:
+                append_log(log, "stopping container", c)
+                cli_restart.append(c)
+                c.stop()
+            net.remove()
             n.networkid = None
             n.skip_sync = True
             n.force_rebuild = False
