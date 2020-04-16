@@ -28,6 +28,7 @@ from scripts.dblog import *
 
 def create_docker_nets(client, nets, log, delete_existing=False):
     for n in nets:
+        append_log(log, "rebuild_docker_network::start_check::", n.networkid)
         if n.addrpool:
             ipam_pool = docker.types.IPAMPool(subnet=n.subnet, gateway=n.dg, iprange=n.addrpool)
             ipam_config = docker.types.IPAMConfig(pool_configs=[ipam_pool])
