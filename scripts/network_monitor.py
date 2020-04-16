@@ -37,13 +37,15 @@ def create_docker_nets(client, nets, log, delete_existing=False):
         else:
             ipam_config = None
 
+        cli_restart = []
         if n.force_rebuild or delete_existing:
             net = client.networks.get(n.networkid)
             append_log(log, "rebuild_docker_network", n.networkid, net.name)
             if net.name != "bridge":
                 for c in net.containers:
                     append_log(log, "stopping container", c)
-                    c.stop()
+                    cli_restart.append(c)
+                    c.pause()
                 net.remove()
                 n.networkid = None
                 n.skip_sync = True
@@ -100,6 +102,10 @@ def create_docker_nets(client, nets, log, delete_existing=False):
                 n.last_update = dt
                 n.skip_sync = True
                 n.save()
+
+        for c in cli_restart:
+            append_log(log, "starting container", c)
+            c.unpause()
 
 
 def sync_docker_networks():
