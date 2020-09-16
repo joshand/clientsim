@@ -187,4 +187,25 @@
 		"daynum": 5,
 		"dayname": "Friday"
 	}
+}, {
+	"model": "client_sim.upload",
+	"fields": {
+		"description": "upload/nginx.conf",
+		"file": "upload/nginx.conf",
+		"uploaded_at": "2020-10-14T11:13:43.264Z"
+	}
+}, {
+	"model": "client_sim.upload",
+	"fields": {
+		"description": "upload/delay.html",
+		"file": "upload/delay.html",
+		"uploaded_at": "2020-10-14T11:14:04.285Z"
+	}
+}, {
+	"model": "client_sim.upload",
+	"fields": {
+		"description": "upload/style.css",
+		"file": "upload/style.css",
+		"uploaded_at": "2020-10-14T11:14:26.737Z"
+	}
 }]

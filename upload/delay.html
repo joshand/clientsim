@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Server Side Delay</title>
+<link rel="stylesheet" href="style.css">
+<style>
+    body {
+        width: 35em;
+        margin: 0 auto;
+        font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+</style>
+</head>
+<body>
+<a href="http://meraki.cisco.com">
+  <img src="/images/Color_Digital.png" alt="Cisco Meraki">
+</a>
+
+<h1>This is an example of a delayed HTTP response!</h1>
+<p>This page was generated using an HTTP server side delay of <ins id="delaytime"></ins> seconds<p>
+
+<script>
+function getUrlVars() {
+    var vars = {};
+    var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+        vars[key] = value;
+    });
+    return vars;
+}
+
+function getUrlParam(parameter, defaultvalue) {
+    var urlparameter = defaultvalue;
+    if(window.location.href.indexOf(parameter) > -1) {
+        urlparameter = getUrlVars()[parameter];
+        }
+    return urlparameter;
+}
+
+var delay = getUrlParam('time','None');
+document.getElementById("delaytime").innerHTML = delay;
+
+</script>
+</body>
+</html>
