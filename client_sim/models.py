@@ -592,6 +592,12 @@ class Bridge(models.Model):
     def __str__(self):
         return self.description + " (" + self.name + ")"
 
+    def dockernetworkos(self):
+        if self.networkid:
+            return "br-" + str(self.networkid)[:12]
+        else:
+            return None
+
     def dockernetwork(self):
         return str(self.name)
 
