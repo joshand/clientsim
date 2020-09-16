@@ -13,11 +13,11 @@ from django.contrib.auth import logout
 import re
 from scripts.interface_monitor import delete_bridge
 from scripts.network_monitor import delete_network
-from scripts.client_monitor import delete_container
+from scripts.client_monitor import delete_container, get_container_logs
 import subprocess
 import io
 from django.views.decorators.clickjacking import xframe_options_exempt
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from urllib.parse import urlparse
 
 
@@ -51,6 +51,13 @@ def get_file(request):
         response['Content-Disposition'] = 'attachment; filename="untitled.txt"'
 
     return response
+
+
+@xframe_options_exempt
+def container_log(request):
+    containerid = request.META['PATH_INFO'].split("/")[-1:][0]
+
+    return JsonResponse({"data": get_container_logs(containerid)})
 
 
 def status_ipaddr(request):
