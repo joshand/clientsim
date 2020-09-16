@@ -169,6 +169,8 @@ def import_networks():
         if b.interface.name not in detect_bridge_members(b.dockernetworkos()):
             # print(b.interface.name, "missing from bridge", b.dockernetworkos())
             cmdlist = [
+                "ip link set {{bridgeinterface}} up",
+                "iw dev {{interface}} set 4addr on",
                 "brctl addif {{bridgedockerinterface}} {{interface}}"
                 ]
             exec_cmd(b, cmdlist, log)
