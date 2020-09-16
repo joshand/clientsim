@@ -803,6 +803,7 @@ class Client(models.Model):
     bridge = models.ForeignKey(Bridge, on_delete=models.SET_NULL, null=True, blank=True)
     dashboard = models.ForeignKey(Dashboard, on_delete=models.SET_NULL, null=True, blank=True, default=None)
     container = models.ForeignKey(Container, on_delete=models.SET_NULL, null=True, blank=True, default=None)
+    portbind = models.JSONField(default=dict, blank=True)
     ipaddress = models.CharField(max_length=15, blank=True, null=True, default=None)
     macaddress = models.CharField(max_length=17, blank=True, unique=True, default=generate_mac)
     hostname = models.CharField(max_length=63, blank=True, unique=True, default=generate_host)
