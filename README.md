@@ -44,14 +44,18 @@ Note: If you plan on doing VLAN Trunking and running this inside of VMware, you 
     2) Ensure that your Port Group Security (or vSwitch) is set to Accept Promiscuous mode, MAC address changes and Forged transmits
     ![vmware](images/vmware.png)
 
-1) Launch the web interface
+1) Launch the web interface:
+
 ![ui](images/ui.png)
 
 2) (Optional) Give your physical interfaces easy to remember descriptions
+
 ![interfaces](images/interfaces.png)
 
 3) Configure Logical Interfaces (Bridges or VLANs), along with IP settings for each (ensure that you do not use duplicate default gateways - Docker does not allow this)
+
 ![interfaces](images/networks.png)
 
 4) Create containers - there are a couple of built in images to get you started; you can create your own in the "Docker Images" section. Select a VLAN or Bridge for each container, click Save Changes when done.
+
 ![interfaces](images/containers.png)
