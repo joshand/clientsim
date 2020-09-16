@@ -8,163 +8,353 @@
                 Docker Containers
                 <a href="/home/config-container?id={{ i.id }}&action=addcontainer"><span style="font-size: x-small">[Add Container]</span></a>
                 <table class="testTableClass">
-                    <thead class="md-data-table__thead">
-                        <tr>
-                            <th style="width: 8rem">Description</th>
-                            <th style="width: 8rem">Hostname</th>
-                            <th style="width: 8rem">MAC Address</th>
-                            <th style="width: 14rem">Image</th>
-                            <th style="width: 8rem">Port Binding</th>
-                            <th style="width: 12rem">VLAN</th>
-                            <th style="width: 12rem">Bridge</th>
-                            <th style="width: 4rem"></th>
-                        </tr>
-                    </thead>
                     <tbody class="md-data-table__tbody">
+                        <tr><td>
                         {% for n in data %}
-                            <td>
-                                <div class="md-input__wrapper">
-                                    <input style="font-size: small" class="md-input md-input--after md-dirty" tabindex="10" type="text" id="contDesc-{{ n.id }}" name="contDesc-{{ n.id }}" placeholder="Friendly Container Description" value="{{ n.description }}">
-                                    <span class="md-input__after">
-                                        <button class="md-button md-button--36 md-button--icon md-input__icon-clear" id="md-button-50" data-md-event-key="md-button-50" alt="clear input" type="button" aria-label="clear input" aria-pressed="" tabindex="110" onclick="clearinput('contDesc-{{ n.id }}')">
-                                            <span class="md-button__children" style="opacity: 1;"><i class="md-icon icon icon-clear-active_16" style="font-size: 16px;"></i></span>
-                                        </button>
-                                    </span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="md-input__wrapper">
-                                    <input style="font-size: small" class="md-input md-input--after md-dirty" tabindex="11" type="text" id="contHost-{{ n.id }}" name="contHost-{{ n.id }}" placeholder="Hostname" value="{{ n.hostname }}">
-                                    <span class="md-input__after">
-                                        <button class="md-button md-button--36 md-button--icon md-input__icon-clear" id="md-button-50" data-md-event-key="md-button-50" alt="clear input" type="button" aria-label="clear input" aria-pressed="" tabindex="111" onclick="clearinput('contHost-{{ n.id }}')">
-                                            <span class="md-button__children" style="opacity: 1;"><i class="md-icon icon icon-clear-active_16" style="font-size: 16px;"></i></span>
-                                        </button>
-                                    </span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="md-input__wrapper">
-                                    <input style="font-size: small" class="md-input md-input--after md-dirty" tabindex="12" type="text" id="contMac-{{ n.id }}" name="contMac-{{ n.id }}" placeholder="MAC Address" value="{{ n.macaddress }}">
-                                    <span class="md-input__after">
-                                        <button class="md-button md-button--36 md-button--icon md-input__icon-clear" id="md-button-50" data-md-event-key="md-button-50" alt="clear input" type="button" aria-label="clear input" aria-pressed="" tabindex="112" onclick="clearinput('contMac-{{ n.id }}')">
-                                            <span class="md-button__children" style="opacity: 1;"><i class="md-icon icon icon-clear-active_16" style="font-size: 16px;"></i></span>
-                                        </button>
-                                    </span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="md-input-container columns medium-12" id="contImage-container">
-                                    <div class="md-input__wrapper md-select">
-                                        <button id="contImage-btn-{{ n.id }}" class="ignore md-button md-button--36 active" alt="" type="button" aria-labelledby="contImage-label-{{ n.id }}" tabindex="30" name="md-select-69" aria-haspopup="listbox" onclick="toggleList('contImage-btn-{{ n.id }}', 'contImage-dropdown-{{ n.id }}', 'contImage-list-{{ n.id }}')">
-                                            <span class="ignore md-button__children" style="opacity: 1;">
-                                                <div style="font-size: small" class="ignore md-list-item__left" id="contImage-label-{{ n.id }}">
-                                                    {% if n.container %}
-                                                        {{ n.container.description }}
-                                                    {% else %}
-                                                        None
-                                                    {% endif %}
-                                                    <i class="ignore icon icon-arrow-down_16"></i>
-                                                </div>
+                            <table class="testTableClass" style="border: black; border-style: dashed; border-width: thin">
+                                <thead class="md-data-table__thead">
+                                    <tr>
+                                        <th style="width: 8rem">Description</th>
+                                        <th style="width: 8rem">Hostname</th>
+                                        <th style="width: 8rem">MAC Address</th>
+                                        <th style="width: 14rem">Image</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="md-data-table__tbody">
+                                    <td>
+                                        <div class="md-input__wrapper">
+                                            <input style="font-size: small" class="md-input md-input--after md-dirty" tabindex="10" type="text" id="contDesc-{{ n.id }}" name="contDesc-{{ n.id }}" placeholder="Friendly Container Description" value="{{ n.description }}">
+                                            <span class="md-input__after">
+                                                <button class="md-button md-button--36 md-button--icon md-input__icon-clear" id="md-button-50" data-md-event-key="md-button-50" alt="clear input" type="button" aria-label="clear input" aria-pressed="" tabindex="110" onclick="clearinput('contDesc-{{ n.id }}')">
+                                                    <span class="md-button__children" style="opacity: 1;"><i class="md-icon icon icon-clear-active_16" style="font-size: 16px;"></i></span>
+                                                </button>
                                             </span>
-                                        </button>
-                                        <div class="md-event-overlay md-event-overlay--bottom" id="contImage-dropdown-{{ n.id }}" style="display:none;">
-                                            <div class="md-event-overlay__children" id="contImage-list-{{ n.id }}">
-                                                <div id="contImage-content" class="md-list md-list--vertical md-list" role="listbox" aria-labelledby="md-select-69__label" aria-multiselectable="false">
-                                                    {% for element in images %}
-                                                    <div aria-current="true" class="md-list-item" id="md-list-73__so-item" role="option" value="{{ element.id }}" tabindex="0" title="{{ element.description }}">
-                                                        <div style="font-size: small" class="md-list-item__center" onclick="listclick('{{ element.id }}', '{{ element.description }}', 'contImage-label-{{ n.id }}', 'contImage-id-{{ n.id }}', 'contImage-name-{{ n.id }}', '')">{{ element.description }}</div>
-                                                        <div class="md-list-item__right"></div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="md-input__wrapper">
+                                            <input style="font-size: small" class="md-input md-input--after md-dirty" tabindex="11" type="text" id="contHost-{{ n.id }}" name="contHost-{{ n.id }}" placeholder="Hostname" value="{{ n.hostname }}">
+                                            <span class="md-input__after">
+                                                <button class="md-button md-button--36 md-button--icon md-input__icon-clear" id="md-button-50" data-md-event-key="md-button-50" alt="clear input" type="button" aria-label="clear input" aria-pressed="" tabindex="111" onclick="clearinput('contHost-{{ n.id }}')">
+                                                    <span class="md-button__children" style="opacity: 1;"><i class="md-icon icon icon-clear-active_16" style="font-size: 16px;"></i></span>
+                                                </button>
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="md-input__wrapper">
+                                            <input style="font-size: small" class="md-input md-input--after md-dirty" tabindex="12" type="text" id="contMac-{{ n.id }}" name="contMac-{{ n.id }}" placeholder="MAC Address" value="{{ n.macaddress }}">
+                                            <span class="md-input__after">
+                                                <button class="md-button md-button--36 md-button--icon md-input__icon-clear" id="md-button-50" data-md-event-key="md-button-50" alt="clear input" type="button" aria-label="clear input" aria-pressed="" tabindex="112" onclick="clearinput('contMac-{{ n.id }}')">
+                                                    <span class="md-button__children" style="opacity: 1;"><i class="md-icon icon icon-clear-active_16" style="font-size: 16px;"></i></span>
+                                                </button>
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="md-input-container columns medium-12" id="contImage-container">
+                                            <div class="md-input__wrapper md-select">
+                                                <button id="contImage-btn-{{ n.id }}" class="ignore md-button md-button--36 active" alt="" type="button" aria-labelledby="contImage-label-{{ n.id }}" tabindex="30" name="md-select-69" aria-haspopup="listbox" onclick="toggleList('contImage-btn-{{ n.id }}', 'contImage-dropdown-{{ n.id }}', 'contImage-list-{{ n.id }}')">
+                                                    <span class="ignore md-button__children" style="opacity: 1;">
+                                                        <div style="font-size: small" class="ignore md-list-item__left" id="contImage-label-{{ n.id }}">
+                                                            {% if n.container %}
+                                                                {{ n.container.description }}
+                                                            {% else %}
+                                                                None
+                                                            {% endif %}
+                                                            <i class="ignore icon icon-arrow-down_16"></i>
+                                                        </div>
+                                                    </span>
+                                                </button>
+                                                <div class="md-event-overlay md-event-overlay--bottom" id="contImage-dropdown-{{ n.id }}" style="display:none;">
+                                                    <div class="md-event-overlay__children" id="contImage-list-{{ n.id }}">
+                                                        <div id="contImage-content" class="md-list md-list--vertical md-list" role="listbox" aria-labelledby="md-select-69__label" aria-multiselectable="false">
+                                                            {% for element in images %}
+                                                            <div aria-current="true" class="md-list-item" id="md-list-73__so-item" role="option" value="{{ element.id }}" tabindex="0" title="{{ element.description }}">
+                                                                <div style="font-size: small" class="md-list-item__center" onclick="listclick('{{ element.id }}', '{{ element.description }}', 'contImage-label-{{ n.id }}', 'contImage-id-{{ n.id }}', 'contImage-name-{{ n.id }}', '')">{{ element.description }}</div>
+                                                                <div class="md-list-item__right"></div>
+                                                            </div>
+                                                            {% endfor %}
+                                                        </div>
                                                     </div>
-                                                    {% endfor %}
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-                                <input type="hidden" id="contImage-id-{{ n.id }}" name="contImage-id-{{ n.id }}" value="{{ n.container.id }}" />
-                                <input type="hidden" id="contImage-name-{{ n.id }}" name="contImage-name-{{ n.id }}" value="" />
-                            </td>
-                            <td>
-                                <div class="md-input__wrapper">
-                                    <input style="font-size: small" class="md-input md-input--after md-dirty" tabindex="12" type="text" id="contPort-{{ n.id }}" name="contPort-{{ n.id }}" placeholder="i.e. {&quot;80/tcp&quot;: 80}" value="{{ n.portbind }}">
-                                    <span class="md-input__after">
-                                        <button class="md-button md-button--36 md-button--icon md-input__icon-clear" id="md-button-50" data-md-event-key="md-button-50" alt="clear input" type="button" aria-label="clear input" aria-pressed="" tabindex="112" onclick="clearinput('contPort-{{ n.id }}')">
-                                            <span class="md-button__children" style="opacity: 1;"><i class="md-icon icon icon-clear-active_16" style="font-size: 16px;"></i></span>
-                                        </button>
-                                    </span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="md-input-container columns medium-12" id="contVlan-container">
-                                    <div class="md-input__wrapper md-select">
-                                        <button id="contVlan-btn-{{ n.id }}" class="ignore md-button md-button--36 active" alt="" type="button" aria-labelledby="contVlan-label-{{ n.id }}" tabindex="30" name="md-select-69" aria-haspopup="listbox" onclick="toggleList('contVlan-btn-{{ n.id }}', 'contVlan-dropdown-{{ n.id }}', 'contVlan-list-{{ n.id }}')">
-                                            <span class="ignore md-button__children" style="opacity: 1;">
-                                                <div style="font-size: small" class="ignore md-list-item__left" id="contVlan-label-{{ n.id }}">
-                                                    {% if n.network %}
-                                                        {{ n.network.description }}
-                                                    {% else %}
-                                                        None
-                                                    {% endif %}
-                                                    <i class="ignore icon icon-arrow-down_16"></i>
-                                                </div>
+                                        <input type="hidden" id="contImage-id-{{ n.id }}" name="contImage-id-{{ n.id }}" value="{{ n.container.id }}" />
+                                        <input type="hidden" id="contImage-name-{{ n.id }}" name="contImage-name-{{ n.id }}" value="" />
+                                    </td>
+                                    </tr>
+                                </tbody>
+                                <thead class="md-data-table__thead">
+                                    <tr>
+                                        <th style="width: 8rem">Port Binding</th>
+                                        <th style="width: 12rem">VLAN</th>
+                                        <th style="width: 12rem">Bridge</th>
+                                        <th style="width: 4rem">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="md-data-table__tbody">
+                                    <td>
+                                        <div class="md-input__wrapper">
+                                            <input style="font-size: small" class="md-input md-input--after md-dirty" tabindex="12" type="text" id="contPort-{{ n.id }}" name="contPort-{{ n.id }}" placeholder="i.e. {&quot;80/tcp&quot;: 80}" value="{{ n.portbind }}">
+                                            <span class="md-input__after">
+                                                <button class="md-button md-button--36 md-button--icon md-input__icon-clear" id="md-button-50" data-md-event-key="md-button-50" alt="clear input" type="button" aria-label="clear input" aria-pressed="" tabindex="112" onclick="clearinput('contPort-{{ n.id }}')">
+                                                    <span class="md-button__children" style="opacity: 1;"><i class="md-icon icon icon-clear-active_16" style="font-size: 16px;"></i></span>
+                                                </button>
                                             </span>
-                                        </button>
-                                        <div class="md-event-overlay md-event-overlay--bottom" id="contVlan-dropdown-{{ n.id }}" style="display:none;">
-                                            <div class="md-event-overlay__children" id="contVlan-list-{{ n.id }}">
-                                                <div id="contVlan-content" class="md-list md-list--vertical md-list" role="listbox" aria-labelledby="md-select-69__label" aria-multiselectable="false">
-                                                    {% for element in vlans %}
-                                                    <div aria-current="true" class="md-list-item" id="md-list-73__so-item" role="option" value="{{ element.id }}" tabindex="0" title="{{ element.description }}">
-                                                        <div style="font-size: small" class="md-list-item__center" onclick="listclick('{{ element.id }}', '{{ element.description }}', 'contVlan-label-{{ n.id }}', 'contVlan-id-{{ n.id }}', 'contVlan-name-{{ n.id }}', '')">{{ element.description }}</div>
-                                                        <div class="md-list-item__right"></div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="md-input-container columns medium-12" id="contVlan-container">
+                                            <div class="md-input__wrapper md-select">
+                                                <button id="contVlan-btn-{{ n.id }}" class="ignore md-button md-button--36 active" alt="" type="button" aria-labelledby="contVlan-label-{{ n.id }}" tabindex="30" name="md-select-69" aria-haspopup="listbox" onclick="toggleList('contVlan-btn-{{ n.id }}', 'contVlan-dropdown-{{ n.id }}', 'contVlan-list-{{ n.id }}')">
+                                                    <span class="ignore md-button__children" style="opacity: 1;">
+                                                        <div style="font-size: small" class="ignore md-list-item__left" id="contVlan-label-{{ n.id }}">
+                                                            {% if n.network %}
+                                                                {{ n.network.description }}
+                                                            {% else %}
+                                                                None
+                                                            {% endif %}
+                                                            <i class="ignore icon icon-arrow-down_16"></i>
+                                                        </div>
+                                                    </span>
+                                                </button>
+                                                <div class="md-event-overlay md-event-overlay--bottom" id="contVlan-dropdown-{{ n.id }}" style="display:none;">
+                                                    <div class="md-event-overlay__children" id="contVlan-list-{{ n.id }}">
+                                                        <div id="contVlan-content" class="md-list md-list--vertical md-list" role="listbox" aria-labelledby="md-select-69__label" aria-multiselectable="false">
+                                                            {% for element in vlans %}
+                                                            <div aria-current="true" class="md-list-item" id="md-list-73__so-item" role="option" value="{{ element.id }}" tabindex="0" title="{{ element.description }}">
+                                                                <div style="font-size: small" class="md-list-item__center" onclick="listclick('{{ element.id }}', '{{ element.description }}', 'contVlan-label-{{ n.id }}', 'contVlan-id-{{ n.id }}', 'contVlan-name-{{ n.id }}', '')">{{ element.description }}</div>
+                                                                <div class="md-list-item__right"></div>
+                                                            </div>
+                                                            {% endfor %}
+                                                        </div>
                                                     </div>
-                                                    {% endfor %}
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-                                <input type="hidden" id="contVlan-id-{{ n.id }}" name="contVlan-id-{{ n.id }}" value="{{ n.network.id }}" />
-                                <input type="hidden" id="contVlan-name-{{ n.id }}" name="contVlan-name-{{ n.id }}" value="" />
-                            </td>
-                            <td>
-                                <div class="md-input-container columns medium-12" id="contBridge-container">
-                                    <div class="md-input__wrapper md-select">
-                                        <button id="contBridge-btn-{{ n.id }}" class="ignore md-button md-button--36 active" alt="" type="button" aria-labelledby="contBridge-label-{{ n.id }}" tabindex="30" name="md-select-69" aria-haspopup="listbox" onclick="toggleList('contBridge-btn-{{ n.id }}', 'contBridge-dropdown-{{ n.id }}', 'contBridge-list-{{ n.id }}')">
-                                            <span class="ignore md-button__children" style="opacity: 1;">
-                                                <div style="font-size: small" class="ignore md-list-item__left" id="contBridge-label-{{ n.id }}">
-                                                    {% if n.bridge %}
-                                                        {{ n.bridge.description }}
-                                                    {% else %}
-                                                        None
-                                                    {% endif %}
-                                                    <i class="ignore icon icon-arrow-down_16"></i>
-                                                </div>
-                                            </span>
-                                        </button>
-                                        <div class="md-event-overlay md-event-overlay--bottom" id="contBridge-dropdown-{{ n.id }}" style="display:none;">
-                                            <div class="md-event-overlay__children" id="contBridge-list-{{ n.id }}">
-                                                <div id="contBridge-content" class="md-list md-list--vertical md-list" role="listbox" aria-labelledby="md-select-69__label" aria-multiselectable="false">
-                                                    {% for element in bridges %}
-                                                    <div aria-current="true" class="md-list-item" id="md-list-73__so-item" role="option" value="{{ element.id }}" tabindex="0" title="{{ element.description }}">
-                                                        <div style="font-size: small" class="md-list-item__center" onclick="listclick('{{ element.id }}', '{{ element.description }}', 'contBridge-label-{{ n.id }}', 'contBridge-id-{{ n.id }}', 'contBridge-name-{{ n.id }}', '')">{{ element.description }}</div>
-                                                        <div class="md-list-item__right"></div>
+                                        <input type="hidden" id="contVlan-id-{{ n.id }}" name="contVlan-id-{{ n.id }}" value="{{ n.network.id }}" />
+                                        <input type="hidden" id="contVlan-name-{{ n.id }}" name="contVlan-name-{{ n.id }}" value="" />
+                                    </td>
+                                    <td>
+                                        <div class="md-input-container columns medium-12" id="contBridge-container">
+                                            <div class="md-input__wrapper md-select">
+                                                <button id="contBridge-btn-{{ n.id }}" class="ignore md-button md-button--36 active" alt="" type="button" aria-labelledby="contBridge-label-{{ n.id }}" tabindex="30" name="md-select-69" aria-haspopup="listbox" onclick="toggleList('contBridge-btn-{{ n.id }}', 'contBridge-dropdown-{{ n.id }}', 'contBridge-list-{{ n.id }}')">
+                                                    <span class="ignore md-button__children" style="opacity: 1;">
+                                                        <div style="font-size: small" class="ignore md-list-item__left" id="contBridge-label-{{ n.id }}">
+                                                            {% if n.bridge %}
+                                                                {{ n.bridge.description }}
+                                                            {% else %}
+                                                                None
+                                                            {% endif %}
+                                                            <i class="ignore icon icon-arrow-down_16"></i>
+                                                        </div>
+                                                    </span>
+                                                </button>
+                                                <div class="md-event-overlay md-event-overlay--bottom" id="contBridge-dropdown-{{ n.id }}" style="display:none;">
+                                                    <div class="md-event-overlay__children" id="contBridge-list-{{ n.id }}">
+                                                        <div id="contBridge-content" class="md-list md-list--vertical md-list" role="listbox" aria-labelledby="md-select-69__label" aria-multiselectable="false">
+                                                            {% for element in bridges %}
+                                                            <div aria-current="true" class="md-list-item" id="md-list-73__so-item" role="option" value="{{ element.id }}" tabindex="0" title="{{ element.description }}">
+                                                                <div style="font-size: small" class="md-list-item__center" onclick="listclick('{{ element.id }}', '{{ element.description }}', 'contBridge-label-{{ n.id }}', 'contBridge-id-{{ n.id }}', 'contBridge-name-{{ n.id }}', '')">{{ element.description }}</div>
+                                                                <div class="md-list-item__right"></div>
+                                                            </div>
+                                                            {% endfor %}
+                                                        </div>
                                                     </div>
-                                                    {% endfor %}
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-                                <input type="hidden" id="contBridge-id-{{ n.id }}" name="contBridge-id-{{ n.id }}" value="{{ n.container.id }}" />
-                                <input type="hidden" id="contBridge-name-{{ n.id }}" name="contBridge-name-{{ n.id }}" value="" />
-                            </td><td>
-                            <a href="/home/config-container?id={{ n.id }}&action=delcontainer"><span class="icon icon-delete_24"></span></a>
-                            </td></tr>
+                                        <input type="hidden" id="contBridge-id-{{ n.id }}" name="contBridge-id-{{ n.id }}" value="{{ n.container.id }}" />
+                                        <input type="hidden" id="contBridge-name-{{ n.id }}" name="contBridge-name-{{ n.id }}" value="" />
+                                    </td><td>
+                                    <a onclick="getLog('{{ n.id }}')"><span class="icon icon-file-text_24"></span></a>
+                                    <a href="/home/config-container?id={{ n.id }}&action=delcontainer"><span class="icon icon-delete_24"></span></a>
+                                    </td></tr>
+                                </tbody>
+                            </table>
                         {% endfor %}
+                        </td></tr>
                     </tbody>
                 </table>
+{#                <table class="testTableClass">#}
+{#                    <thead class="md-data-table__thead">#}
+{#                        <tr>#}
+{#                            <th style="width: 8rem">Description</th>#}
+{#                            <th style="width: 8rem">Hostname</th>#}
+{#                            <th style="width: 8rem">MAC Address</th>#}
+{#                            <th style="width: 14rem">Image</th>#}
+{#                            <th style="width: 8rem">Port Binding</th>#}
+{#                            <th style="width: 12rem">VLAN</th>#}
+{#                            <th style="width: 12rem">Bridge</th>#}
+{#                            <th style="width: 4rem"></th>#}
+{#                        </tr>#}
+{#                    </thead>#}
+{#                    <tbody class="md-data-table__tbody">#}
+{#                        {% for n in data %}#}
+{#                            <td>#}
+{#                                <div class="md-input__wrapper">#}
+{#                                    <input style="font-size: small" class="md-input md-input--after md-dirty" tabindex="10" type="text" id="contDesc-{{ n.id }}" name="contDesc-{{ n.id }}" placeholder="Friendly Container Description" value="{{ n.description }}">#}
+{#                                    <span class="md-input__after">#}
+{#                                        <button class="md-button md-button--36 md-button--icon md-input__icon-clear" id="md-button-50" data-md-event-key="md-button-50" alt="clear input" type="button" aria-label="clear input" aria-pressed="" tabindex="110" onclick="clearinput('contDesc-{{ n.id }}')">#}
+{#                                            <span class="md-button__children" style="opacity: 1;"><i class="md-icon icon icon-clear-active_16" style="font-size: 16px;"></i></span>#}
+{#                                        </button>#}
+{#                                    </span>#}
+{#                                </div>#}
+{#                            </td>#}
+{#                            <td>#}
+{#                                <div class="md-input__wrapper">#}
+{#                                    <input style="font-size: small" class="md-input md-input--after md-dirty" tabindex="11" type="text" id="contHost-{{ n.id }}" name="contHost-{{ n.id }}" placeholder="Hostname" value="{{ n.hostname }}">#}
+{#                                    <span class="md-input__after">#}
+{#                                        <button class="md-button md-button--36 md-button--icon md-input__icon-clear" id="md-button-50" data-md-event-key="md-button-50" alt="clear input" type="button" aria-label="clear input" aria-pressed="" tabindex="111" onclick="clearinput('contHost-{{ n.id }}')">#}
+{#                                            <span class="md-button__children" style="opacity: 1;"><i class="md-icon icon icon-clear-active_16" style="font-size: 16px;"></i></span>#}
+{#                                        </button>#}
+{#                                    </span>#}
+{#                                </div>#}
+{#                            </td>#}
+{#                            <td>#}
+{#                                <div class="md-input__wrapper">#}
+{#                                    <input style="font-size: small" class="md-input md-input--after md-dirty" tabindex="12" type="text" id="contMac-{{ n.id }}" name="contMac-{{ n.id }}" placeholder="MAC Address" value="{{ n.macaddress }}">#}
+{#                                    <span class="md-input__after">#}
+{#                                        <button class="md-button md-button--36 md-button--icon md-input__icon-clear" id="md-button-50" data-md-event-key="md-button-50" alt="clear input" type="button" aria-label="clear input" aria-pressed="" tabindex="112" onclick="clearinput('contMac-{{ n.id }}')">#}
+{#                                            <span class="md-button__children" style="opacity: 1;"><i class="md-icon icon icon-clear-active_16" style="font-size: 16px;"></i></span>#}
+{#                                        </button>#}
+{#                                    </span>#}
+{#                                </div>#}
+{#                            </td>#}
+{#                            <td>#}
+{#                                <div class="md-input-container columns medium-12" id="contImage-container">#}
+{#                                    <div class="md-input__wrapper md-select">#}
+{#                                        <button id="contImage-btn-{{ n.id }}" class="ignore md-button md-button--36 active" alt="" type="button" aria-labelledby="contImage-label-{{ n.id }}" tabindex="30" name="md-select-69" aria-haspopup="listbox" onclick="toggleList('contImage-btn-{{ n.id }}', 'contImage-dropdown-{{ n.id }}', 'contImage-list-{{ n.id }}')">#}
+{#                                            <span class="ignore md-button__children" style="opacity: 1;">#}
+{#                                                <div style="font-size: small" class="ignore md-list-item__left" id="contImage-label-{{ n.id }}">#}
+{#                                                    {% if n.container %}#}
+{#                                                        {{ n.container.description }}#}
+{#                                                    {% else %}#}
+{#                                                        None#}
+{#                                                    {% endif %}#}
+{#                                                    <i class="ignore icon icon-arrow-down_16"></i>#}
+{#                                                </div>#}
+{#                                            </span>#}
+{#                                        </button>#}
+{#                                        <div class="md-event-overlay md-event-overlay--bottom" id="contImage-dropdown-{{ n.id }}" style="display:none;">#}
+{#                                            <div class="md-event-overlay__children" id="contImage-list-{{ n.id }}">#}
+{#                                                <div id="contImage-content" class="md-list md-list--vertical md-list" role="listbox" aria-labelledby="md-select-69__label" aria-multiselectable="false">#}
+{#                                                    {% for element in images %}#}
+{#                                                    <div aria-current="true" class="md-list-item" id="md-list-73__so-item" role="option" value="{{ element.id }}" tabindex="0" title="{{ element.description }}">#}
+{#                                                        <div style="font-size: small" class="md-list-item__center" onclick="listclick('{{ element.id }}', '{{ element.description }}', 'contImage-label-{{ n.id }}', 'contImage-id-{{ n.id }}', 'contImage-name-{{ n.id }}', '')">{{ element.description }}</div>#}
+{#                                                        <div class="md-list-item__right"></div>#}
+{#                                                    </div>#}
+{#                                                    {% endfor %}#}
+{#                                                </div>#}
+{#                                            </div>#}
+{#                                        </div>#}
+{#                                    </div>#}
+{#                                </div>#}
+{#                                <input type="hidden" id="contImage-id-{{ n.id }}" name="contImage-id-{{ n.id }}" value="{{ n.container.id }}" />#}
+{#                                <input type="hidden" id="contImage-name-{{ n.id }}" name="contImage-name-{{ n.id }}" value="" />#}
+{#                            </td>#}
+{#                            <td>#}
+{#                                <div class="md-input__wrapper">#}
+{#                                    <input style="font-size: small" class="md-input md-input--after md-dirty" tabindex="12" type="text" id="contPort-{{ n.id }}" name="contPort-{{ n.id }}" placeholder="i.e. {&quot;80/tcp&quot;: 80}" value="{{ n.portbind }}">#}
+{#                                    <span class="md-input__after">#}
+{#                                        <button class="md-button md-button--36 md-button--icon md-input__icon-clear" id="md-button-50" data-md-event-key="md-button-50" alt="clear input" type="button" aria-label="clear input" aria-pressed="" tabindex="112" onclick="clearinput('contPort-{{ n.id }}')">#}
+{#                                            <span class="md-button__children" style="opacity: 1;"><i class="md-icon icon icon-clear-active_16" style="font-size: 16px;"></i></span>#}
+{#                                        </button>#}
+{#                                    </span>#}
+{#                                </div>#}
+{#                            </td>#}
+{#                            <td>#}
+{#                                <div class="md-input-container columns medium-12" id="contVlan-container">#}
+{#                                    <div class="md-input__wrapper md-select">#}
+{#                                        <button id="contVlan-btn-{{ n.id }}" class="ignore md-button md-button--36 active" alt="" type="button" aria-labelledby="contVlan-label-{{ n.id }}" tabindex="30" name="md-select-69" aria-haspopup="listbox" onclick="toggleList('contVlan-btn-{{ n.id }}', 'contVlan-dropdown-{{ n.id }}', 'contVlan-list-{{ n.id }}')">#}
+{#                                            <span class="ignore md-button__children" style="opacity: 1;">#}
+{#                                                <div style="font-size: small" class="ignore md-list-item__left" id="contVlan-label-{{ n.id }}">#}
+{#                                                    {% if n.network %}#}
+{#                                                        {{ n.network.description }}#}
+{#                                                    {% else %}#}
+{#                                                        None#}
+{#                                                    {% endif %}#}
+{#                                                    <i class="ignore icon icon-arrow-down_16"></i>#}
+{#                                                </div>#}
+{#                                            </span>#}
+{#                                        </button>#}
+{#                                        <div class="md-event-overlay md-event-overlay--bottom" id="contVlan-dropdown-{{ n.id }}" style="display:none;">#}
+{#                                            <div class="md-event-overlay__children" id="contVlan-list-{{ n.id }}">#}
+{#                                                <div id="contVlan-content" class="md-list md-list--vertical md-list" role="listbox" aria-labelledby="md-select-69__label" aria-multiselectable="false">#}
+{#                                                    {% for element in vlans %}#}
+{#                                                    <div aria-current="true" class="md-list-item" id="md-list-73__so-item" role="option" value="{{ element.id }}" tabindex="0" title="{{ element.description }}">#}
+{#                                                        <div style="font-size: small" class="md-list-item__center" onclick="listclick('{{ element.id }}', '{{ element.description }}', 'contVlan-label-{{ n.id }}', 'contVlan-id-{{ n.id }}', 'contVlan-name-{{ n.id }}', '')">{{ element.description }}</div>#}
+{#                                                        <div class="md-list-item__right"></div>#}
+{#                                                    </div>#}
+{#                                                    {% endfor %}#}
+{#                                                </div>#}
+{#                                            </div>#}
+{#                                        </div>#}
+{#                                    </div>#}
+{#                                </div>#}
+{#                                <input type="hidden" id="contVlan-id-{{ n.id }}" name="contVlan-id-{{ n.id }}" value="{{ n.network.id }}" />#}
+{#                                <input type="hidden" id="contVlan-name-{{ n.id }}" name="contVlan-name-{{ n.id }}" value="" />#}
+{#                            </td>#}
+{#                            <td>#}
+{#                                <div class="md-input-container columns medium-12" id="contBridge-container">#}
+{#                                    <div class="md-input__wrapper md-select">#}
+{#                                        <button id="contBridge-btn-{{ n.id }}" class="ignore md-button md-button--36 active" alt="" type="button" aria-labelledby="contBridge-label-{{ n.id }}" tabindex="30" name="md-select-69" aria-haspopup="listbox" onclick="toggleList('contBridge-btn-{{ n.id }}', 'contBridge-dropdown-{{ n.id }}', 'contBridge-list-{{ n.id }}')">#}
+{#                                            <span class="ignore md-button__children" style="opacity: 1;">#}
+{#                                                <div style="font-size: small" class="ignore md-list-item__left" id="contBridge-label-{{ n.id }}">#}
+{#                                                    {% if n.bridge %}#}
+{#                                                        {{ n.bridge.description }}#}
+{#                                                    {% else %}#}
+{#                                                        None#}
+{#                                                    {% endif %}#}
+{#                                                    <i class="ignore icon icon-arrow-down_16"></i>#}
+{#                                                </div>#}
+{#                                            </span>#}
+{#                                        </button>#}
+{#                                        <div class="md-event-overlay md-event-overlay--bottom" id="contBridge-dropdown-{{ n.id }}" style="display:none;">#}
+{#                                            <div class="md-event-overlay__children" id="contBridge-list-{{ n.id }}">#}
+{#                                                <div id="contBridge-content" class="md-list md-list--vertical md-list" role="listbox" aria-labelledby="md-select-69__label" aria-multiselectable="false">#}
+{#                                                    {% for element in bridges %}#}
+{#                                                    <div aria-current="true" class="md-list-item" id="md-list-73__so-item" role="option" value="{{ element.id }}" tabindex="0" title="{{ element.description }}">#}
+{#                                                        <div style="font-size: small" class="md-list-item__center" onclick="listclick('{{ element.id }}', '{{ element.description }}', 'contBridge-label-{{ n.id }}', 'contBridge-id-{{ n.id }}', 'contBridge-name-{{ n.id }}', '')">{{ element.description }}</div>#}
+{#                                                        <div class="md-list-item__right"></div>#}
+{#                                                    </div>#}
+{#                                                    {% endfor %}#}
+{#                                                </div>#}
+{#                                            </div>#}
+{#                                        </div>#}
+{#                                    </div>#}
+{#                                </div>#}
+{#                                <input type="hidden" id="contBridge-id-{{ n.id }}" name="contBridge-id-{{ n.id }}" value="{{ n.container.id }}" />#}
+{#                                <input type="hidden" id="contBridge-name-{{ n.id }}" name="contBridge-name-{{ n.id }}" value="" />#}
+{#                            </td><td>#}
+{#                            <a href="/home/config-container?id={{ n.id }}&action=delcontainer"><span class="icon icon-delete_24"></span></a>#}
+{#                            </td></tr>#}
+{#                        {% endfor %}#}
+{#                    </tbody>#}
+{#                </table>#}
             </div>
         </div>
+
+        <div id="logmodal" class="md-modal__backdrop fade in" style="display:none; width: 100px;height: 50px;position:fixed; top: calc(50% - 25px);left: calc(50% - 50px);">
+            <div role="dialog" id="react-aria-modal-dialog" class="md-modal md-modal--default in" aria-labelledby="modal1">
+                <div class="md-modal__content">
+                    <div class="md-modal__flex-container">
+                        <div class="md-modal__header">
+                            <span class="md-modal__title">Container Logs</span>
+                            <button type="button" class="md-close md-modal__close" onclick="document.getElementById('logmodal').style = 'display:none;'"></button>
+                        </div>
+                        <div id="logdata" class="md-modal__body"><form></form></div>
+                        <div class="md-modal__footer">
+                            <button class="md-button md-button--36 md-button--blue" alt="Submit Form" type="button" aria-label="Submit Form">
+                                <span class="md-button__children" onclick="document.getElementById('logmodal').style = 'display:none;'">OK</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="row">&nbsp;</div>
         <div id="bottom_save">
             <div class="md-panel md-panel__form" style="width:100%;padding:0px">
