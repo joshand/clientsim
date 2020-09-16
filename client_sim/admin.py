@@ -7,7 +7,7 @@ class NetworkAdmin(admin.ModelAdmin):
 
 
 class BridgeAdmin(admin.ModelAdmin):
-    readonly_fields = ('networkid', 'last_update', 'last_sync', 'dockernetwork', 'hostnetwork', 'networkimpairmentscript', 'networkimpairmentscripthash', 'last_deployed_hash')
+    readonly_fields = ('networkid', 'last_update', 'last_sync', 'dockernetwork', 'dockernetworkos', 'hostnetwork', 'networkimpairmentscript', 'networkimpairmentscripthash', 'last_deployed_hash')
 
 
 class ClientAdmin(admin.ModelAdmin):
