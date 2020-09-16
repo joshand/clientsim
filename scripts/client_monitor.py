@@ -85,6 +85,7 @@ def create_docker_containers(client, containers, log, delete_existing=False):
                 except Exception as e:
                     # print(sys.exc_info()[-1].tb_lineno, "\n", sys.exc_info())
                     # dolog("sync_docker_containers", "create_new_image", "error", e)
+                    # print(traceback.print_exc())
                     append_log(log, "sync_docker::create_docker_containers::exception re-creating container...", e,
                                traceback.print_exc())
                     cmdout += "Build Image Exception " + str(e) + "\n"
@@ -94,17 +95,23 @@ def create_docker_containers(client, containers, log, delete_existing=False):
                     else:
                         net = c.network.dockernetwork()
 
-                    # print(c.container.buildcontainername, cmd, net, c.macaddress, c.hostname, c.dockercontainername())
+                    try:
+                        port_bindings = json.loads(str(c.portbind))
+                    except Exception as e:
+                        append_log(log, "sync_docker::create_docker_containers::error reading portbinding json")
+                        port_bindings = {}
+
+                    # print(c.container.buildcontainername, c.container.cmd, net, c.portbind, c.macaddress, c.hostname, c.dockercontainername())
 
                     if c.container.cmd:
                         newcli = client.containers.run(c.container.buildcontainername, c.container.cmd,
-                                                       network=net, ports=c.portbind,
+                                                       network=net, ports=port_bindings,
                                                        mac_address=c.macaddress, hostname=c.hostname,
                                                        name=c.dockercontainername(),
                                                        detach=True, tty=True, remove=True)
                     else:
                         newcli = client.containers.run(c.container.buildcontainername,
-                                                       network=net, ports=c.portbind,
+                                                       network=net, ports=port_bindings,
                                                        mac_address=c.macaddress, hostname=c.hostname,
                                                        name=c.dockercontainername(),
                                                        detach=True, tty=True, remove=True)
@@ -279,6 +286,18 @@ def delete_container(container_id):
             append_log(log, "delete_docker_client::No clientID. Doesn't exist?")
 
     db_log("client_monitor", log)
+
+
+def get_container_logs(container_id):
+    client = docker.from_env()
+    clients = Client.objects.filter(id=container_id)
+    for n in clients:
+        if n.clientid:
+            client = client.containers.get(n.clientid)
+            logs = client.logs()
+            return logs.decode("UTF-8").replace("\r\n", "<br>").replace("\n", "<br>")
+
+    return "Error: Unable to get logs for client. Is it running?"
 
 
 def run():
