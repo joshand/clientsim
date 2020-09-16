@@ -1,0 +1,10 @@
+[Unit]
+Description=Client Simulator
+
+[Service]
+Type=simple
+ExecStart=/var/www/clientsim/venv/bin/python /var/www/clientsim/manage.py runserver 10.102.172.3:8000
+User=root
+
+[Install]
+WantedBy=multi-user.target
