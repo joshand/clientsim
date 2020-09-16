@@ -351,12 +351,14 @@ def config_container(request):
             host = request.POST.get("contHost-" + itemid)
             mac = request.POST.get("contMac-" + itemid)
             imgid = request.POST.get("contImage-id-" + itemid)
+            portjson = request.POST.get("contPort-" + itemid)
             netid = request.POST.get("contVlan-id-" + itemid)
             bridgeid = request.POST.get("contBridge-id-" + itemid)
             if desc == "None" or desc == "": desc = None
             if host == "None" or host == "": host = None
             if mac == "None" or mac == "": mac = None
             if imgid == "None" or imgid == "": imgid = None
+            if portjson == "None" or portjson == "": portjson = {}
             if netid == "None" or netid == "": netid = None
             if bridgeid == "None" or bridgeid == "": bridgeid = None
             images = Container.objects.filter(id=imgid)
@@ -374,6 +376,7 @@ def config_container(request):
                     client.bridge = bridges[0]
                 if images:
                     client.container = images[0]
+                client.portbind = portjson
                 client.save()
 
     if request.GET.get("action") == "addcontainer":
