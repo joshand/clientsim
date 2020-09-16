@@ -69,6 +69,18 @@ def detect_bridge(clean_interfaces):
     return bridge_interfaces
 
 
+def detect_bridge_members(bridge):
+    bridge_members = []
+    if not bridge:
+        return bridge_members
+    interfaces = os.listdir('/sys/class/net/{0}'.format(bridge))
+    for each in interfaces:
+        if each.find("lower_") >= 0:
+            bridge_members.append(each.replace("lower_", ""))
+
+    return bridge_members
+
+
 def exec_cmd(bridge, cmdlist, log):
     for l in cmdlist:
         newl = l[:]
@@ -77,6 +89,7 @@ def exec_cmd(bridge, cmdlist, log):
 
         newl = newl.replace("{{interface}}", bridge.interface.name)
         newl = newl.replace("{{bridgeinterface}}", bridge.name)
+        newl = newl.replace("{{bridgedockerinterface}}", bridge.dockernetworkos())
         # newl = newl.replace("{{bridgeip}}", bridge.subnet)
         # if bridge.dg:
         #     newl = newl.replace("{{bridgedg}}", bridge.dg)
@@ -150,9 +163,24 @@ def import_networks():
         stdout, stderr = out.communicate()
         # print(cmd, stdout, stderr)
 
+    # Need to bind eth to bridge interface
+    bridges = Bridge.objects.all()
+    for b in bridges:
+        if b.interface.name not in detect_bridge_members(b.dockernetworkos()):
+            # print(b.interface.name, "missing from bridge", b.dockernetworkos())
+            cmdlist = [
+                "brctl addif {{bridgedockerinterface}} {{interface}}"
+                ]
+            exec_cmd(b, cmdlist, log)
+
+    # bridges = Bridge.objects.all()
+    # for b in bridges:
+    #     print(detect_bridge_members(b.name))
+        # if b.dockernetworkos()
+        # print(bri)
+
     # Don't need to create bridge here; Docker will create it
     # dis_count = Bridge.objects.exclude(name__in=bri).update(is_configured=False)
-    # bri = Bridge.objects.filter(is_configured=False)
     # for b in bri:
     #     cmdlist = [
     #         "brctl addbr {{bridgeinterface}}",
