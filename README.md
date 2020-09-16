@@ -59,3 +59,9 @@ Note: If you plan on doing VLAN Trunking and running this inside of VMware, you 
 4) Create containers - there are a couple of built in images to get you started; you can create your own in the "Docker Images" section. Select a VLAN or Bridge for each container, click Save Changes when done.
 
 ![interfaces](images/containers.png)
+
+## Installing as Linux Service
+1) Modify clientsim.service to set local paths for your system
+2) Copy clientsim.service to /lib/systemd/system/
+3) systemctl daemon-reload
+4) systemctl enable clientsim.service
