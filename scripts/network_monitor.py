@@ -110,7 +110,7 @@ def create_docker_nets(client, nets, log, delete_existing=False):
                 if n.networktype.driveropt:
                     netopt = {**netopt, **json.loads(n.networktype.driveropt)}
 
-                append_log(log, "create_docker_macvlan", netname, ipam_config, netopt)
+                append_log(log, "create_docker_ipvlan", netname, ipam_config, netopt)
                 dt = make_aware(datetime.datetime.now())
                 if ipam_config:
                     newnet = client.networks.create(netname, driver="macvlan", ipam=ipam_config, options=netopt)
@@ -165,9 +165,9 @@ def sync_docker_networks():
     for dn in dnets:
         docker_net_list.append(dn.id)
         # print(dn.attrs)
-        drivers = NetworkType.objects.filter(driver__iexact=dn.attrs["Driver"])
-        networks = Network.objects.filter(networkid__iexact=dn.id)
-        bridges = Bridge.objects.filter(networkid__iexact=dn.id)
+        drivers = NetworkType.objects.filter(driver=dn.attrs["Driver"])
+        networks = Network.objects.filter(networkid=dn.id)
+        bridges = Bridge.objects.filter(networkid=dn.id)
         if len(networks) <= 0 and len(bridges) <= 0 and len(drivers) > 0:
             if dn.name == "bridge":
                 newname = "Default Docker Bridge"
@@ -184,7 +184,7 @@ def sync_docker_networks():
                 newgw = ipamcfg.get("Gateway", None)
                 newrange = ipamcfg.get("IPRange", None)
 
-            intid = Interface.objects.filter(name__iexact=newint)
+            intid = Interface.objects.filter(name=newint)
             if intid:
                 append_log(log, "import_docker_nets_into_db", dn.id, drivers[0], newname, newsubnet, newgw, newrange, intid[0])
                 dt = make_aware(datetime.datetime.now())
