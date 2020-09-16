@@ -93,18 +93,20 @@ def create_docker_containers(client, containers, log, delete_existing=False):
                     else:
                         net = c.network.dockernetwork()
 
-                    if c.container.cmd:
-                        cmd = c.container.cmd
-                    else:
-                        cmd = "/bin/sh"
-
                     # print(c.container.buildcontainername, cmd, net, c.macaddress, c.hostname, c.dockercontainername())
 
-                    newcli = client.containers.run(c.container.buildcontainername, c.container.cmd,
-                                                   network=net,
-                                                   mac_address=c.macaddress, hostname=c.hostname,
-                                                   name=c.dockercontainername(),
-                                                   detach=True, tty=True, remove=True)
+                    if c.container.cmd:
+                        newcli = client.containers.run(c.container.buildcontainername, c.container.cmd,
+                                                       network=net, ports=c.portbind,
+                                                       mac_address=c.macaddress, hostname=c.hostname,
+                                                       name=c.dockercontainername(),
+                                                       detach=True, tty=True, remove=True)
+                    else:
+                        newcli = client.containers.run(c.container.buildcontainername,
+                                                       network=net, ports=c.portbind,
+                                                       mac_address=c.macaddress, hostname=c.hostname,
+                                                       name=c.dockercontainername(),
+                                                       detach=True, tty=True, remove=True)
 
                     # dolog("sync_docker_containers", "create_new_container_built", "success", newcli)
                     cmdout += "New Build Container " + str(newcli) + "\n"
