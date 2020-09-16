@@ -107,21 +107,9 @@
 	"model": "client_sim.container",
 	"fields": {
 		"containertype": "00000000-1111-2222-3333-444444444444",
-		"path": "mikewootini/wget",
-		"cmd": "/bin/sh",
-		"dockerfile": "FROM mikewootini/wget\r\nRUN apt-get update && apt-get upgrade -y && apt-get install -y tsocks\r\nADD {<tsocks.conf>} /etc/tsocks.conf\r\nRUN \"/bin/sh\"",
-		"buildcontainername": "wget_proxy",
-		"clientscript": "#!/bin/bash\r\nua=\"{{user_agent}}\"\r\nurl_list=( {{app_urls}} )\r\nproxy_list=( {{app_delays}} )\r\nwhile [ 1 -eq 1 ]; do\r\n    n=`expr $RANDOM % {{app_count}}`\r\n    wait=`expr $RANDOM % 10`\r\n    url=${url_list[$n]}\r\n    proxy=http://delay:${proxy_list[$n]}@{{server_ip}}:9011/\r\n    if [ ${proxy_list[$n]} -gt 0 ]\r\n    then\r\n        export TSOCKS_PASSWORD=${proxy_list[$n]}\r\n        tsocks wget --delete-after --user-agent=\"$ua\" -p $url -o /proc/1/fd/1\r\n    else\r\n        wget --delete-after --user-agent=\"$ua\" -p $url -o /proc/1/fd/1\r\n    fi\r\n    sleep $wait\r\ndone",
-		"description": "(Custom) HTTP GET URLs",
-		"active": true
-	}
-}, {
-	"model": "client_sim.container",
-	"fields": {
-		"containertype": "00000000-1111-2222-3333-444444444444",
 		"path": "openresty/openresty",
-		"cmd": "/bin/sh",
-		"dockerfile": "FROM openresty/openresty\r\nRUN apt-get -o Acquire::Check-Valid-Until=false update && apt-get -o Acquire::Check-Valid-Until=false upgrade -y && apt-get -o Acquire::Check-Valid-Until=false install -y wget net-tools iputils-ping\r\nRUN mkdir -p /usr/local/openresty/nginx/html/images\r\nADD {<nginx.conf>} /usr/local/openresty/nginx/conf/\r\nADD {<delay.html>} /usr/local/openresty/nginx/html/\r\nADD {<style.css>} /usr/local/openresty/nginx/html/\r\nRUN wget https://upload.wikimedia.org/wikipedia/commons/8/8c/Lake_Superior_Aurora.jpg -O /usr/local/openresty/nginx/html/images/aurora.jpg\r\nRUN wget https://meraki.cisco.com/img/cisco-meraki-logo.png -O /usr/local/openresty/nginx/html/images/Color_Digital.png\r\nCMD [\"/usr/local/openresty/bin/openresty\", \"-g\", \"daemon off;\"]",
+		"cmd": null,
+		"dockerfile": "FROM openresty/openresty\r\nEXPOSE 80\r\nRUN apt-get -o Acquire::Check-Valid-Until=false update && apt-get -o Acquire::Check-Valid-Until=false upgrade -y && apt-get -o Acquire::Check-Valid-Until=false install -y wget net-tools iputils-ping procps\r\nRUN mkdir -p /usr/local/openresty/nginx/html/images\r\nADD {<nginx.conf>} /usr/local/openresty/nginx/conf/nginx.conf\r\nADD {<delay.html>} /usr/local/openresty/nginx/html/delay.html\r\nADD {<style.css>} /usr/local/openresty/nginx/html/style.css\r\nRUN chmod 644 /usr/local/openresty/nginx/conf/nginx.conf\r\nRUN chmod 644 /usr/local/openresty/nginx/html/delay.html\r\nRUN chmod 644 /usr/local/openresty/nginx/html/style.css\r\nRUN wget https://upload.wikimedia.org/wikipedia/commons/8/8c/Lake_Superior_Aurora.jpg -O /usr/local/openresty/nginx/html/images/aurora.jpg\r\nRUN wget https://meraki.cisco.com/img/cisco-meraki-logo.png -O /usr/local/openresty/nginx/html/images/Color_Digital.png\r\n# this container can provide a server-side delay when loading pages; use like this:\r\n# http://107.150.70.192/delay?time=5\r\nCMD [\"/usr/local/openresty/bin/openresty\", \"-g\", \"daemon off;\"]",
 		"buildcontainername": "delay-server",
 		"clientscript": "",
 		"description": "OpenResty",
