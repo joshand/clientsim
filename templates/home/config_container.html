@@ -12,8 +12,9 @@
                         <tr>
                             <th style="width: 8rem">Description</th>
                             <th style="width: 8rem">Hostname</th>
-                            <th style="width: 10rem">MAC Address</th>
-                            <th style="width: 12rem">Image</th>
+                            <th style="width: 8rem">MAC Address</th>
+                            <th style="width: 14rem">Image</th>
+                            <th style="width: 8rem">Port Binding</th>
                             <th style="width: 12rem">VLAN</th>
                             <th style="width: 12rem">Bridge</th>
                             <th style="width: 4rem"></th>
@@ -82,6 +83,16 @@
                                 </div>
                                 <input type="hidden" id="contImage-id-{{ n.id }}" name="contImage-id-{{ n.id }}" value="{{ n.container.id }}" />
                                 <input type="hidden" id="contImage-name-{{ n.id }}" name="contImage-name-{{ n.id }}" value="" />
+                            </td>
+                            <td>
+                                <div class="md-input__wrapper">
+                                    <input style="font-size: small" class="md-input md-input--after md-dirty" tabindex="12" type="text" id="contPort-{{ n.id }}" name="contPort-{{ n.id }}" placeholder="i.e. {&quot;80/tcp&quot;: 80}" value="{{ n.portbind }}">
+                                    <span class="md-input__after">
+                                        <button class="md-button md-button--36 md-button--icon md-input__icon-clear" id="md-button-50" data-md-event-key="md-button-50" alt="clear input" type="button" aria-label="clear input" aria-pressed="" tabindex="112" onclick="clearinput('contPort-{{ n.id }}')">
+                                            <span class="md-button__children" style="opacity: 1;"><i class="md-icon icon icon-clear-active_16" style="font-size: 16px;"></i></span>
+                                        </button>
+                                    </span>
+                                </div>
                             </td>
                             <td>
                                 <div class="md-input-container columns medium-12" id="contVlan-container">
