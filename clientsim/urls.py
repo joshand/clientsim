@@ -74,6 +74,7 @@ urlpatterns = [
     url(r'^home/status-dockernet$', views.status_dockernet, name='status_dockernet'),
     url(r'^home/status-dockerps$', views.status_dockerps, name='status_dockerps'),
     url(r'^home/status-iwconfig$', views.status_iwconfig, name='status_iwconfig'),
+    url(r'^container/log', views.container_log, name='container_log'),
     url(r'^file', views.get_file, name='get_file'),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('api-token-auth/', obtain_auth_token, name='api_token_auth'),
