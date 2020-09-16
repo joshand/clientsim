@@ -30,7 +30,7 @@
     python manage.py drf_create_token admin
     Generated token 1234567890abcdefghijklmnopqrstuvwxyz1234 for user admin
     ```
-    Configure MEDIA_ROOT in settings.py - this defines where uploaded files go.
+    Configure MEDIA_ROOT in settings.py - this defines where uploaded files go. I recommend setting this to the absolute path of the upload directory that is part of this project.
     ```  
     python manage.py loaddata import.json
     sudo ./venv/bin/python manage.py runserver 127.0.0.1:8000     (note: if you want this to be reachable externally, use the actual IP address of your client)
