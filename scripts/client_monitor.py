@@ -85,8 +85,9 @@ def create_docker_containers(client, containers, log, delete_existing=False):
                 except Exception as e:
                     # print(sys.exc_info()[-1].tb_lineno, "\n", sys.exc_info())
                     # dolog("sync_docker_containers", "create_new_image", "error", e)
+                    append_log(log, "sync_docker::create_docker_containers::exception re-creating container...", e,
+                               traceback.print_exc())
                     cmdout += "Build Image Exception " + str(e) + "\n"
-
                 try:
                     if c.bridge:
                         net = c.bridge.dockernetwork()
@@ -112,8 +113,9 @@ def create_docker_containers(client, containers, log, delete_existing=False):
                     cmdout += "New Build Container " + str(newcli) + "\n"
                 except Exception as e:
                     # print(sys.exc_info()[-1].tb_lineno, "\n", sys.exc_info())
-                    traceback.print_exc()
                     # dolog("sync_docker_containers", "create_new_container_built", "error", e)
+                    append_log(log, "sync_docker::create_docker_containers::exception re-creating container...", e,
+                               traceback.print_exc())
                     cmdout += "Build Container Exception " + str(e) + "\n"
         except Exception as e:
             # print(sys.exc_info()[-1].tb_lineno, "\n", sys.exc_info())
