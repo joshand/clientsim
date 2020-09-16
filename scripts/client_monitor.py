@@ -1,18 +1,40 @@
-import atexit
+# import atexit
 import docker
 from docker import types
-from apscheduler.schedulers.background import BackgroundScheduler
+# from apscheduler.schedulers.background import BackgroundScheduler
 from client_sim.models import *
 from django.conf import settings
 from django.utils.timezone import make_aware
 from io import BytesIO
 from django.db.models import F
 from scripts.dblog import *
-
+import traceback
+import sys
 
 # def dolog(fn, step, *txt):
 #     l = Log.objects.create(function=fn, step=step, log=",".join(map(str, txt)))
 #     l.save()
+
+
+def check_parse_files(dockerfile, cmdout):
+    ss = ServerSetting.objects.all()
+    if len(ss) != 1:
+        print("No ServerSetting defined (or multiple defined, which is not allowed). Not fixing up dockerfile...")
+        return dockerfile
+    df = dockerfile[:]
+    # df = df.replace("{{workdir}}", str(os.path.dirname(os.path.realpath("manage.py"))) + "/upload")
+    df.replace("COPY", "ADD")
+    while df.find("{<") != -1:
+        f_start = df.find("{<")
+        f_end = df.find(">}", f_start)
+        fn = df[f_start + 2:f_end]
+        upload = Upload.objects.filter(file__endswith=fn)
+        if len(upload) != 1:
+            cmdout += "Unable to locate file '" + fn + "' in Uploads!"
+            return None
+        url = (ss[0].baseurl + "file/" + str(upload[0].id))
+        df = df.replace("{<" + fn + ">}", url)
+    return df
 
 
 def create_docker_containers(client, containers, log, delete_existing=False):
@@ -35,38 +57,65 @@ def create_docker_containers(client, containers, log, delete_existing=False):
 
         try:
             if c.container.containertype.name == "PUBLISHED":
-                newcli = client.containers.run(c.container.path, c.container.cmd, network=c.network.dockernetwork(),
-                                               mac_address=c.macaddress, hostname=c.hostname, name=c.dockercontainername(),
-                                               detach=True, tty=True, remove=True)
+                if c.network:
+                    newcli = client.containers.run(c.container.path, c.container.cmd, network=c.network.dockernetwork(),
+                                                   mac_address=c.macaddress, hostname=c.hostname,
+                                                   name=c.dockercontainername(), detach=True, tty=True, remove=True)
+                elif c.bridge:
+                    newcli = client.containers.run(c.container.path, c.container.cmd, network=c.bridge.dockernetwork(),
+                                                   mac_address=c.macaddress, hostname=c.hostname,
+                                                   name=c.dockercontainername(), detach=True, tty=True, remove=True)
+
                 # dolog("sync_docker_containers", "create_new_container_published", newcli)
                 cmdout += "New Published Container " + str(newcli) + "\n"
             elif c.container.containertype.name == "DOCKERFILE":
                 df = str(c.container.get_dockerfile()) + "\n"
+                df = check_parse_files(df, cmdout)
                 f = BytesIO(df.encode('utf-8'))
                 try:
+                    base_path = str(os.path.dirname(os.path.realpath("manage.py"))) + "/upload"
                     client2 = docker.APIClient(base_url='unix://var/run/docker.sock')
                     response = [line for line in client2.build(
-                        fileobj=f, rm=True, tag=c.container.buildcontainername
+                        fileobj=f, rm=True, tag=c.container.buildcontainername, path=base_path
                     )]
                     # newimg = client.images.build(fileobj=f, custom_context=True, tag=c.container.buildcontainername)
                     # dolog("sync_docker_containers", "create_new_image", "success", response)
+                    # print("DOCKERFILE", c.container, str(response))
                     cmdout += "New Build Image " + str(response) + "\n"
                 except Exception as e:
+                    # print(sys.exc_info()[-1].tb_lineno, "\n", sys.exc_info())
                     # dolog("sync_docker_containers", "create_new_image", "error", e)
                     cmdout += "Build Image Exception " + str(e) + "\n"
 
                 try:
-                    # print(c.container.buildcontainername, c.container.cmd, c.network.dockernetwork(), c.macaddress, c.hostname, c.dockercontainername())
-                    newcli = client.containers.run(c.container.buildcontainername, c.container.cmd, network=c.network.dockernetwork(),
-                                                   mac_address=c.macaddress, hostname=c.hostname, name=c.dockercontainername(),
+                    if c.bridge:
+                        net = c.bridge.dockernetwork()
+                    else:
+                        net = c.network.dockernetwork()
+
+                    if c.container.cmd:
+                        cmd = c.container.cmd
+                    else:
+                        cmd = "/bin/sh"
+
+                    # print(c.container.buildcontainername, cmd, net, c.macaddress, c.hostname, c.dockercontainername())
+
+                    newcli = client.containers.run(c.container.buildcontainername, c.container.cmd,
+                                                   network=net,
+                                                   mac_address=c.macaddress, hostname=c.hostname,
+                                                   name=c.dockercontainername(),
                                                    detach=True, tty=True, remove=True)
+
                     # dolog("sync_docker_containers", "create_new_container_built", "success", newcli)
                     cmdout += "New Build Container " + str(newcli) + "\n"
                 except Exception as e:
+                    # print(sys.exc_info()[-1].tb_lineno, "\n", sys.exc_info())
+                    traceback.print_exc()
                     # dolog("sync_docker_containers", "create_new_container_built", "error", e)
                     cmdout += "Build Container Exception " + str(e) + "\n"
         except Exception as e:
-            append_log(log, "sync_docker::create_docker_containers::exception re-creating container...", e)
+            # print(sys.exc_info()[-1].tb_lineno, "\n", sys.exc_info())
+            append_log(log, "sync_docker::create_docker_containers::exception re-creating container...", e, sys.exc_info())
 
         # print(c, c.container.path, c.container.cmd, newcli)
 
@@ -98,7 +147,10 @@ def sync_container_ips(containers, log):
 
         ipaddr = newcli.attrs['NetworkSettings']['IPAddress']
         if ipaddr is None or ipaddr == "":
-            ipaddr = newcli.attrs['NetworkSettings']['Networks'][c.network.dockernetwork()]['IPAddress']
+            if c.network:
+                ipaddr = newcli.attrs['NetworkSettings']['Networks'][c.network.dockernetwork()]['IPAddress']
+            else:
+                ipaddr = newcli.attrs['NetworkSettings']['Networks'][c.bridge.dockernetwork()]['IPAddress']
         # print("containerip", c.clientid, ipaddr)
         c.ipaddress = ipaddr
         c.skip_sync = True
@@ -106,21 +158,44 @@ def sync_container_ips(containers, log):
 
 
 def sync_docker_clients():
+    docker_container_list = []
     log = []
     client = docker.from_env()
-    # First, check to see if there are any clients in database that do not exist in Docker
-    conts = Client.objects.filter(clientid__isnull=True)
+    try:
+        dconts = client.containers.list()
+    except Exception as e:
+        append_log(log, "sync_docker_clients::exception getting Docker client list::is Docker installed and running?::", e)
+        db_log("client_monitor", log)
+        return ""
+
+    append_log(log, "sync_docker_networks::full_docker_network_list::", dconts)
+    # First, check to see if all relevant Docker clients exist in the database. If not, import them.
+    for dn in dconts:
+        docker_container_list.append(dn.id)
+        containers = Client.objects.filter(clientid__iexact=dn.id)
+        if len(containers) <= 0:
+            append_log(log, "import_docker_containers_into_db", dn.id)
+            dt = make_aware(datetime.datetime.now())
+            Client.objects.create(clientid=dn.id, description="Imported from Docker", active=False, last_sync=dt, last_update=dt)
+
+    # clear clientid for any container in db that doesn't actually exist in Docker
+    clients = Client.objects.exclude(clientid__in=docker_container_list).update(clientid=None)
+
+    # Second, check to see if there are any clients in database that do not exist in Docker
+    conts = Client.objects.filter(clientid__isnull=True).filter(active=True)
+    # print("missing clientid=", conts)
     append_log(log, "sync_docker::create_docker_containers::phase_1", conts)
     create_docker_containers(client, conts, log)
 
     # Last, see if any clients have been updated and need to be re-synced
     conts = Client.objects.all().exclude(last_sync=F('last_update'))
-    # print(conts)
+    # print("out of sync=", conts)
     append_log(log, "sync_docker::create_docker_containers::phase_2", conts)
     create_docker_containers(client, conts, log, delete_existing=True)
 
     # Next, check to see if there are any clients in database that are tagged with 'force_rebuild'
     conts = Client.objects.filter(force_rebuild=True)
+    # print("force_rebuild=", conts)
     append_log(log, "sync_docker::create_docker_containers::phase_3", conts)
     create_docker_containers(client, conts, log, delete_existing=True)
 
@@ -187,15 +262,20 @@ def sync_docker_clients():
     db_log("client_monitor", log)
 
 
+def delete_container(container_id):
+    client = docker.from_env()
+    log = []
+    clients = Client.objects.filter(id=container_id)
+    for n in clients:
+        if n.clientid:
+            client = client.containers.get(n.clientid)
+            append_log(log, "delete_docker_container", n.clientid, client.name)
+            client.remove()
+        else:
+            append_log(log, "delete_docker_client::No clientID. Doesn't exist?")
+
+    db_log("client_monitor", log)
+
+
 def run():
-    # Enable the job scheduler to run schedule jobs
-    cron = BackgroundScheduler()
-
-    # Explicitly kick off the background thread
-    cron.start()
-    cron.remove_all_jobs()
-    job0 = cron.add_job(sync_docker_clients)
-    job1 = cron.add_job(sync_docker_clients, 'interval', seconds=10)
-
-    # Shutdown your cron thread if the web process is stopped
-    atexit.register(lambda: cron.shutdown(wait=False))
+    sync_docker_clients()

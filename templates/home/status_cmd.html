@@ -1,0 +1,22 @@
+{% extends 'home/base.html' %}
+{% load extras %}
+
+{% block content %}
+    <div class="md-data-table" style="width: 100%;">
+        <div class="md-data-table__wrapper">
+            Status -- "{{ cmd }}"
+            <table class="testTableClass">
+{#                <thead class="md-data-table__thead">#}
+{#                    <tr>#}
+{#                        <th style="width: 8rem">Name</th>#}
+{#                        <th style="width: 16rem">MAC Address</th>#}
+{#                        <th style="width: 32rem">Description</th>#}
+{#                    </tr>#}
+{#                </thead>#}
+                <tbody class="md-data-table__tbody">
+                <pre style="font-family: 'Courier New'">{{ data|safe }}</pre>
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

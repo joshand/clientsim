@@ -1,0 +1,160 @@
+{% extends 'home/base.html' %}
+{% load extras %}
+
+{% block content %}
+    {% if image %}
+        <form method="POST" action="/home/config-image" style="width:100%;padding:0px">
+            <div class="md-data-table" style="width: 100%;">
+                <div class="md-data-table__wrapper">
+                    Docker Image -- {{ image.description }}
+                    <table class="testTableClass">
+                        <tbody class="md-data-table__tbody">
+                            <tr>
+                                <td>Description</td>
+                                <td style="vertical-align: top">
+                                    <div class="md-input__wrapper">
+                                        <input class="md-input md-input--after md-dirty" tabindex="10" type="text" id="imgDesc-{{ image.id }}" name="imgDesc-{{ image.id }}" placeholder="Friendly Image Description" value="{{ image.description }}">
+                                        <span class="md-input__after">
+                                            <button class="md-button md-button--36 md-button--icon md-input__icon-clear" id="md-button-50" data-md-event-key="md-button-50" alt="clear input" type="button" aria-label="clear input" aria-pressed="" tabindex="110" onclick="clearinput('imgDesc-{{ image.id }}')">
+                                                <span class="md-button__children" style="opacity: 1;"><i class="md-icon icon icon-clear-active_16" style="font-size: 16px;"></i></span>
+                                            </button>
+                                        </span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Container Type</td>
+                                <td>
+                                    <div class="md-input-container columns medium-6" id="profilecontainer">
+                                        <div class="md-input__wrapper md-select">
+                                            <button id="btnprofile-{{ image.id }}" class="ignore md-button md-button--36 active" alt="" type="button" aria-labelledby="profilelabel-{{ image.id }}" tabindex="30" name="md-select-69" aria-haspopup="listbox" onclick="toggleList('btnprofile-{{ image.id }}', 'dropdownprofile-{{ image.id }}', 'listprofile-{{ image.id }}')">
+                                                <span class="ignore md-button__children" style="opacity: 1;">
+                                                    <div style="font-size: small" class="ignore md-list-item__left" id="profilelabel-{{ image.id }}">
+                                                        {{ image.containertype }}
+                                                        <i class="ignore icon icon-arrow-down_16"></i>
+                                                    </div>
+                                                </span>
+                                            </button>
+                                            <div class="md-event-overlay md-event-overlay--bottom" id="dropdownprofile-{{ image.id }}" style="display:none;">
+                                                <div class="md-event-overlay__children" id="listprofile-{{ image.id }}">
+                                                    <div id="profilecontent" class="md-list md-list--vertical md-list" role="listbox" aria-labelledby="md-select-69__label" aria-multiselectable="false">
+                                                        {% for imagetype in data %}
+                                                        <div aria-current="true" class="md-list-item" id="md-list-73__so-item" role="option" value="{{ imagetype.id }}" tabindex="0" title="{{ imagetype.description }}">
+                                                            <div style="font-size: small" class="md-list-item__center" onclick="listclick('{{ imagetype.id }}', '{{ imagetype.description }}', 'profilelabel-{{ image.id }}', 'imgTypeid-{{ image.id }}', 'imgTypename-{{ image.id }}', '')">{{ imagetype.description }}</div>
+                                                            <div class="md-list-item__right"></div>
+                                                        </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" id="imgTypeid-{{ image.id }}" name="imgTypeid-{{ image.id }}" value="{{ image.containertype.id }}" />
+                                    <input type="hidden" id="imgTypename-{{ image.id }}" name="imgTypename-{{ image.id }}" value="" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Container Path</td>
+                                <td>
+                                    <div class="md-input__wrapper">
+                                        <input class="md-input md-input--after md-dirty" tabindex="10" type="text" id="imgPath-{{ image.id }}" name="imgPath-{{ image.id }}" placeholder="Docker Container Path" value="{{ image.path }}">
+                                        <span class="md-input__after">
+                                            <button class="md-button md-button--36 md-button--icon md-input__icon-clear" id="md-button-50" data-md-event-key="md-button-50" alt="clear input" type="button" aria-label="clear input" aria-pressed="" tabindex="110" onclick="clearinput('imgPath-{{ image.id }}')">
+                                                <span class="md-button__children" style="opacity: 1;"><i class="md-icon icon icon-clear-active_16" style="font-size: 16px;"></i></span>
+                                            </button>
+                                        </span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Dockerfile<br><i>(Only for 'Docker Build using Dockerfile')</i><br><i>(If you are providing files, ensure they exist in<br>&nbsp;&nbsp;&nbsp;'<a href="/home/config-upload">Uploads</a>', and reference them as {&lt;filename.ext&gt;})</i></td>
+                                <td>
+                                    <div class="md-input__wrapper">
+                                        <textarea style="height: 250px" class="md-input md-input--after md-dirty" tabindex="10" id="imgDockerfile-{{ image.id }}" name="imgDockerfile-{{ image.id }}" placeholder="Image Dockerfile">{{ image.dockerfile }}</textarea>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Docker Build Image Name<br><i>(Only for 'Docker Build using Dockerfile')</i></td>
+                                <td>
+                                    <div class="md-input__wrapper">
+                                        <input class="md-input md-input--after md-dirty" tabindex="10" type="text" id="imgBuildname-{{ image.id }}" name="imgBuildname-{{ image.id }}" placeholder="Docker Build Name" value="{{ image.buildcontainername }}">
+                                        <span class="md-input__after">
+                                            <button class="md-button md-button--36 md-button--icon md-input__icon-clear" id="md-button-50" data-md-event-key="md-button-50" alt="clear input" type="button" aria-label="clear input" aria-pressed="" tabindex="110" onclick="clearinput('imgBuildname-{{ image.id }}')">
+                                                <span class="md-button__children" style="opacity: 1;"><i class="md-icon icon icon-clear-active_16" style="font-size: 16px;"></i></span>
+                                            </button>
+                                        </span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Container Command<br><i>(Run something after the container is launched?)</i></td>
+                                <td>
+                                    <div class="md-input__wrapper">
+                                        <input class="md-input md-input--after md-dirty" tabindex="10" type="text" id="imgCmd-{{ image.id }}" name="imgCmd-{{ image.id }}" placeholder="Docker Image Command" value="{{ image.cmd }}">
+                                        <span class="md-input__after">
+                                            <button class="md-button md-button--36 md-button--icon md-input__icon-clear" id="md-button-50" data-md-event-key="md-button-50" alt="clear input" type="button" aria-label="clear input" aria-pressed="" tabindex="110" onclick="clearinput('imgCmd-{{ image.id }}')">
+                                                <span class="md-button__children" style="opacity: 1;"><i class="md-icon icon icon-clear-active_16" style="font-size: 16px;"></i></span>
+                                            </button>
+                                        </span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Client Script<br><i>(Run what?)</i></td>
+                                <td>
+                                    <div class="md-input__wrapper">
+                                        <textarea style="height: 250px" class="md-input md-input--after md-dirty" tabindex="10" id="imgScript-{{ image.id }}" name="imgScript-{{ image.id }}" placeholder="Client Shell Script">{{ image.clientscript }}</textarea>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="row">&nbsp;</div>
+            <div id="bottom_save">
+                <div class="md-panel md-panel__form" style="width:100%;padding:0px">
+                    {% csrf_token %}
+                    <div class="md-input-group" style="width:100%;padding:20px;background-color:#FFF5E0;border-color:#cbb013;border-width:1px;border-style:solid">
+                        <div class="md-input__icon-container">
+                            <div class="row" style="align-content:center; display:flex">
+                                <div class="md-input-container columns medium-6">
+                                    <div class="md-input__wrapper">
+                                        <button class="md-button md-button--blue" tabindex="50">Save Changes</button> or <a href="/home/config-image">cancel</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    {% else %}
+        <div class="md-data-table" style="width: 100%;">
+            <div class="md-data-table__wrapper">
+                Docker Images <a href="/home/config-image?action=addimage"><span style="font-size: x-small">[Add Image]</span></a>
+                <table class="testTableClass">
+                    <thead class="md-data-table__thead">
+                        <tr>
+                            <th style="width: 16rem">Description</th>
+                            <th style="width: 16rem">Type</th>
+                            <th style="width: 4rem"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="md-data-table__tbody">
+                    {% for i in data %}
+                        <tr>
+                            <td><a href="/home/config-image?id={{ i.id }}&action=editimage">{{ i.description }}</a></td>
+                            <td>{{ i.containertype }}</td>
+                            <td>
+                                <a href="/home/config-image?id={{ i.id }}&action=delimage"><span class="icon icon-delete_24"></span></a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

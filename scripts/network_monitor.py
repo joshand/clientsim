@@ -1,10 +1,10 @@
 import sys
 import os
 import traceback
-import atexit
+# import atexit
 import docker
 from docker import types
-from apscheduler.schedulers.background import BackgroundScheduler
+# from apscheduler.schedulers.background import BackgroundScheduler
 from client_sim.models import *
 from django.conf import settings
 from django.db.models import F
@@ -28,7 +28,14 @@ from scripts.dblog import *
 
 def create_docker_nets(client, nets, log, delete_existing=False):
     for n in nets:
+        if n.subnet is None or n.subnet.strip() == "None":
+            continue
         append_log(log, "rebuild_docker_network::start_check::", n.networkid)
+
+        # networks = client.networks.list()
+        # for network in networks:
+        #     print(network.attrs["IPAM"])
+
         if n.addrpool:
             ipam_pool = docker.types.IPAMPool(subnet=n.subnet, gateway=n.dg, iprange=n.addrpool)
             ipam_config = docker.types.IPAMConfig(pool_configs=[ipam_pool])
@@ -39,7 +46,7 @@ def create_docker_nets(client, nets, log, delete_existing=False):
             ipam_config = None
 
         # cli_restart = []
-        if n.force_rebuild or delete_existing:
+        if (n.force_rebuild or delete_existing) and n.networkid:
             try:
                 net = client.networks.get(n.networkid)
                 append_log(log, "rebuild_docker_network", n.networkid, net.name)
@@ -114,6 +121,27 @@ def create_docker_nets(client, nets, log, delete_existing=False):
                 n.last_update = dt
                 n.skip_sync = True
                 n.save()
+        elif n.networktype.driver == "bridge" and str(n.interface.name) != "docker0":
+            if n.interface.name:
+                netname = n.name
+                netopt = {"parent": n.interface.name}
+
+                if n.networktype.driveropt:
+                    netopt = {**netopt, **json.loads(n.networktype.driveropt)}
+
+                append_log(log, "create_docker_bridge", netname, ipam_config, netopt)
+                dt = make_aware(datetime.datetime.now())
+                if ipam_config:
+                    newnet = client.networks.create(netname, driver="bridge", ipam=ipam_config, options=netopt)
+                else:
+                    newnet = client.networks.create(netname, driver="bridge", options=netopt)
+                n.networkid = newnet.id
+                n.last_sync = dt
+                n.last_update = dt
+                n.skip_sync = True
+                n.save()
+        else:
+            append_log(log, "create_docker_unknown", n.networktype.driver)
 
         # for c in cli_restart:
         #     append_log(log, "starting container", c)
@@ -121,6 +149,7 @@ def create_docker_nets(client, nets, log, delete_existing=False):
 
 
 def sync_docker_networks():
+    docker_net_list = []
     log = []
     # try:
     client = docker.from_env()
@@ -134,10 +163,12 @@ def sync_docker_networks():
     append_log(log, "sync_docker_networks::full_docker_network_list::", dnets)
     # First, check to see if all relevant Docker networks exist in the database. If not, import them.
     for dn in dnets:
+        docker_net_list.append(dn.id)
         # print(dn.attrs)
         drivers = NetworkType.objects.filter(driver__iexact=dn.attrs["Driver"])
-        nets = Network.objects.filter(networkid__iexact=dn.id)
-        if len(nets) <= 0 and len(drivers) > 0:
+        networks = Network.objects.filter(networkid__iexact=dn.id)
+        bridges = Bridge.objects.filter(networkid__iexact=dn.id)
+        if len(networks) <= 0 and len(bridges) <= 0 and len(drivers) > 0:
             if dn.name == "bridge":
                 newname = "Default Docker Bridge"
                 newint = dn.attrs["Options"]["com.docker.network.bridge.name"]
@@ -162,10 +193,19 @@ def sync_docker_networks():
             else:
                 append_log(log, "import_docker_nets_into_db", dn.id, drivers[0], newname, newsubnet, newgw, newrange, newint, "Unable to resolve interface name")
 
+    # clear networkid for any network/bridge in db that doesn't actually exist in Docker
+    nets = Network.objects.exclude(networkid__in=docker_net_list).update(networkid=None)
+    bridges = Bridge.objects.exclude(networkid__in=docker_net_list).update(networkid=None)
+
     # Next, check to see if there are any networks in database that do not exist in Docker
     nets = Network.objects.filter(networkid__isnull=True)
     append_log(log, "sync_docker_networks::nets_in_db_not_in_docker::", nets)
     create_docker_nets(client, nets, log)
+
+    bridges = Bridge.objects.filter(networkid__isnull=True)
+    append_log(log, "sync_docker_bridges::bridges_in_db_not_in_docker::", nets)
+    create_docker_nets(client, bridges, log)
+
     # for n in nets:
     #     if n.addrpool:
     #         ipam_pool = docker.types.IPAMPool(subnet=n.subnet, gateway=n.dg, iprange=n.addrpool)
@@ -198,13 +238,28 @@ def sync_docker_networks():
     nets = Network.objects.all().filter(force_rebuild=True)
     append_log(log, "sync_docker_networks::force_rebuild::", nets)
     create_docker_nets(client, nets, log, delete_existing=True)
+
+    bridges = Bridge.objects.all().exclude(last_sync=F('last_update'))
+    append_log(log, "sync_docker_bridges::bridges_out_of_sync::", bridges)
+    create_docker_nets(client, bridges, log, delete_existing=True)
+    bridges = Bridge.objects.all().filter(force_rebuild=True)
+    append_log(log, "sync_docker_bridges::force_rebuild::", bridges)
+    create_docker_nets(client, bridges, log, delete_existing=True)
+
     # for n in nets:
         # print(n, n.last_sync, n.last_update)
         # client.networks.
         # I think containers have to be detached before deleting...
 
     # Next, check for Link Impairment script
-    nets = Network.objects.filter(networkid__isnull=False)
+    networks = Network.objects.filter(networkid__isnull=False)
+    bridges = Bridge.objects.filter(networkid__isnull=False)
+    nets = []
+    for o in networks:
+        nets.append(o)
+    for o in bridges:
+        nets.append(o)
+
     for n in nets:
         if (str(n.last_deployed_hash) != str(n.networkimpairmentscripthash())) or n.force_script:
             n.force_script = False
@@ -215,13 +270,16 @@ def sync_docker_networks():
             # print(s)
             if s:
                 lines = s.split("\r\n")
+                # print("Getting ready to deploy...", lines)
                 for l in lines:
                     # print("****", l) #{{interface}}
-                    newl = l.replace("{{interface}}", n.hostnetwork())
-                    out = subprocess.Popen(newl.split(" "),
+                    newl = l.replace("{{interface}}", n.interface.name)
+                    out = subprocess.Popen(newl.replace("\n", "\r\n"), shell=True,
                                            stdout=subprocess.PIPE,
                                            stderr=subprocess.STDOUT)
                     stdout, stderr = out.communicate()
+                    print(newl, stdout, stderr)
+                    # out = subprocess.run(newl, capture_output=True, shell=True)
                     append_log(log, "apply_impairment_script", newl, stdout, stderr)
 
             n.last_deployed_hash = n.networkimpairmentscripthash()
@@ -237,15 +295,26 @@ def sync_docker_networks():
     db_log("network_monitor", log)
 
 
+def delete_network(network_id):
+    client = docker.from_env()
+    log = []
+    nets = Network.objects.filter(id=network_id)
+    for n in nets:
+        if n.networkid:
+            net = client.networks.get(n.networkid)
+            append_log(log, "delete_docker_network", n.networkid, net.name)
+            if net.name != "bridge":
+                for c in net.containers:
+                    append_log(log, "stopping container", c)
+                    c.stop()
+                    # cli_restart.append(c)
+                    # c.pause()
+                net.remove()
+        else:
+            append_log(log, "delete_docker_network::No networkID. Doesn't exist?")
+
+    db_log("network_monitor", log)
+
+
 def run():
-    # Enable the job scheduler to run schedule jobs
-    cron = BackgroundScheduler()
-
-    # Explicitly kick off the background thread
-    cron.start()
-    cron.remove_all_jobs()
-    job0 = cron.add_job(sync_docker_networks)
-    job1 = cron.add_job(sync_docker_networks, 'interval', seconds=10)
-
-    # Shutdown your cron thread if the web process is stopped
-    atexit.register(lambda: cron.shutdown(wait=False))
+    sync_docker_networks()

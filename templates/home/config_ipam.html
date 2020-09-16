@@ -1,0 +1,88 @@
+{% extends 'home/base.html' %}
+{% load extras %}
+
+{% block content %}
+    <form method="POST" action="/home/config-ipam" style="width:100%;padding:0px">
+        <div class="md-data-table" style="width: 100%">
+            Docker IP Pool <a href="/home/config-ipam?id={{ i.id }}&action=addpool"><span style="font-size: x-small">[Add Pool]</span></a>
+            <div class="md-data-table__wrapper">
+                <table class="testTableClass">
+                    <thead class="md-data-table__thead">
+                        <tr>
+                            <th style="width: 16rem">Description</th>
+                            <th style="width: 12rem">Subnet</th>
+                            <th style="width: 12rem">Gateway</th>
+                            <th style="width: 12rem">Address Pool/Mask</th>
+                            <th style="width: 4rem"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="md-data-table__tbody">
+                        {% for n in data %}
+                            <tr>
+                            <td>
+                                <div class="md-input__wrapper">
+                                    <input style="font-size: small" class="md-input md-input--after md-dirty" tabindex="11" type="text" id="poolDesc-{{ n.id }}" name="poolDesc-{{ n.id }}" placeholder="Friendly Pool Description" value="{{ n.description }}">
+                                    <span class="md-input__after">
+                                        <button class="md-button md-button--36 md-button--icon md-input__icon-clear" id="md-button-50" data-md-event-key="md-button-50" alt="clear input" type="button" aria-label="clear input" aria-pressed="" tabindex="111" onclick="clearinput('poolDesc-{{ n.id }}')">
+                                            <span class="md-button__children" style="opacity: 1;"><i class="md-icon icon icon-clear-active_16" style="font-size: 16px;"></i></span>
+                                        </button>
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="md-input__wrapper">
+                                    <input style="font-size: small" class="md-input md-input--after md-dirty" tabindex="12" type="text" id="poolSub-{{ n.id }}" name="poolSub-{{ n.id }}" placeholder="Subnet with /mask" value="{{ n.subnet }}">
+                                    <span class="md-input__after">
+                                        <button class="md-button md-button--36 md-button--icon md-input__icon-clear" id="md-button-50" data-md-event-key="md-button-50" alt="clear input" type="button" aria-label="clear input" aria-pressed="" tabindex="112" onclick="clearinput('poolSub-{{ n.id }}')">
+                                            <span class="md-button__children" style="opacity: 1;"><i class="md-icon icon icon-clear-active_16" style="font-size: 16px;"></i></span>
+                                        </button>
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="md-input__wrapper">
+                                    <input style="font-size: small" class="md-input md-input--after md-dirty" tabindex="13" type="text" id="poolDG-{{ n.id }}" name="poolDG-{{ n.id }}" placeholder="Default Gateway" value="{{ n.dg }}">
+                                    <span class="md-input__after">
+                                        <button class="md-button md-button--36 md-button--icon md-input__icon-clear" id="md-button-50" data-md-event-key="md-button-50" alt="clear input" type="button" aria-label="clear input" aria-pressed="" tabindex="113" onclick="clearinput('poolDG-{{ n.id }}')">
+                                            <span class="md-button__children" style="opacity: 1;"><i class="md-icon icon icon-clear-active_16" style="font-size: 16px;"></i></span>
+                                        </button>
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="md-input__wrapper">
+                                    <input style="font-size: small" class="md-input md-input--after md-dirty" tabindex="14" type="text" id="poolPool-{{ n.id }}" name="poolPool-{{ n.id }}" placeholder="Address Pool with /mask" value="{{ n.addrpool }}">
+                                    <span class="md-input__after">
+                                        <button class="md-button md-button--36 md-button--icon md-input__icon-clear" id="md-button-50" data-md-event-key="md-button-50" alt="clear input" type="button" aria-label="clear input" aria-pressed="" tabindex="114" onclick="clearinput('poolPool-{{ n.id }}')">
+                                            <span class="md-button__children" style="opacity: 1;"><i class="md-icon icon icon-clear-active_16" style="font-size: 16px;"></i></span>
+                                        </button>
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                            <a href="/home/config-ipam?id={{ n.id }}&action=delpool"><span class="icon icon-delete_24"></span></a>
+                            </td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="row">&nbsp;</div>
+        <div id="bottom_save">
+            <div class="md-panel md-panel__form" style="width:100%;padding:0px">
+                {% csrf_token %}
+                <div class="md-input-group" style="width:100%;padding:20px;background-color:#FFF5E0;border-color:#cbb013;border-width:1px;border-style:solid">
+                    <div class="md-input__icon-container">
+                        <div class="row" style="align-content:center; display:flex">
+                            <div class="md-input-container columns medium-6">
+                                <div class="md-input__wrapper">
+                                    <button class="md-button md-button--blue" tabindex="50">Save Changes</button> or <a href="/home/config-pool">cancel</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+{% endblock %}

@@ -16,6 +16,7 @@ import requests
 import boto3
 from django.db.models import Q
 from rest_framework import authentication
+import os
 
 
 class BearerAuthentication(authentication.TokenAuthentication):
@@ -59,18 +60,23 @@ def fix_up_command(cmd):
             contents = u[0].filedata().replace("\r\n", "{{br}}").replace("\n", "{{br}}").replace("\r", "{{br}}").replace("{{br}}", "\\n")
             contents = contents.replace("{{", "<~<").replace("}}", ">~>")
             outcmd = outcmd.replace("{{" + fn + "}}", "\\n" + contents + "\\n")
+        else:
+            return cmd
 
     return outcmd.replace("<~<", "{{").replace(">~>", "}}")
 
 
 class Upload(models.Model):
-    description = models.CharField(max_length=255, blank=True)
+    description = models.CharField(max_length=255, blank=True, default=None, null=True)
     # file = models.BinaryField(editable=False)
-    file = models.FileField(upload_to='.')
+    file = models.FileField(upload_to='upload')
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.description
+
+    def filename(self):
+        return os.path.basename(self.file.name)
 
     def filedata(self):
         try:
@@ -82,23 +88,36 @@ class Upload(models.Model):
             return self.file
 
     def fspath(self):
-        return "/opt/files/" + self.file.name
+        return os.path.realpath(self.file.name)
 
 
 @receiver(post_save, sender=Upload)
 def post_save_upload(sender, instance=None, created=False, **kwargs):
     post_save.disconnect(post_save_upload, sender=Upload)
-    instance.description = str(instance.file)
+    if not instance.description:
+        instance.description = str(instance.file)
     instance.save()
     post_save.connect(post_save_upload, sender=Upload)
 
 
+@receiver(models.signals.post_delete, sender=Upload)
+def auto_delete_upload_on_delete(sender, instance, **kwargs):
+    """
+    Deletes file from filesystem
+    when corresponding `Upload` object is deleted.
+    """
+    if instance.file:
+        if os.path.isfile(instance.file.path):
+            os.remove(instance.file.path)
+
+
 class ServerSetting(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    baseurl = models.CharField(max_length=100, blank=True, null=True, default=None)
     ipaddress = models.CharField(max_length=100, blank=True, null=True, default=None)
 
     def __str__(self):
-        return self.ipaddress
+        return self.baseurl
 
 
 class InstanceAutomation(models.Model):
@@ -517,6 +536,7 @@ class LinkProfile(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     description = models.CharField("Link Profile Description", max_length=100, null=False, default=None)
     default_profile = models.BooleanField(default=False, editable=False)
+    is_wireless = models.BooleanField(default=False)
     tcdata = models.TextField("Linux Config Commands (tc, iw, etc.)", null=True, blank=True, default=None)
 
     def __str__(self):
@@ -526,24 +546,87 @@ class LinkProfile(models.Model):
 class Interface(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=15, null=False, blank=False)
+    wired = models.BooleanField(default=False)
+    active = models.BooleanField(default=True)
     macaddress = models.CharField(max_length=17, null=True, blank=False, default=None)
     description = models.CharField("Interface Description", max_length=100, blank=False, null=False)
 
+    class Meta:
+        ordering = ['name']
+
     def __str__(self):
         return self.description + " (" + self.name + ")"
+
+
+class IPAMPool(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    description = models.CharField("Pool Description", max_length=100, blank=False, null=False, default="New Pool")
+    subnet = models.CharField(max_length=18, null=True, default=None, blank=True)
+    dg = models.CharField(max_length=15, null=True, default=None, blank=True)
+    addrpool = models.CharField("Client Address Pool", max_length=18, null=True, default=None, blank=True)
+
+    def __str__(self):
+        return str(self.description) + " (" + str(self.subnet) + " -- " + str(self.dg) + " -- " + str(self.addrpool) + ")"
 
 
 class Bridge(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField("Bridge Name. Eg. br1", max_length=15, null=False, blank=False)
     description = models.CharField("Bridge Description", max_length=100, blank=False, null=False)
-    ipaddress = models.CharField("Bridge IP Address (with mask). Eg. 192.168.1.2/24", max_length=20, blank=False, null=False, default="192.168.1.2/24")
-    gateway = models.CharField("Bridge Default Gateway", max_length=20, blank=True, null=True, default=None)
+    networktype = models.ForeignKey(NetworkType, on_delete=models.SET_NULL, null=True, blank=True, default=None)
+    linkprofile = models.ForeignKey(LinkProfile, verbose_name="Default Link Profile", on_delete=models.SET_NULL, null=True, blank=True, default=None)
+    ippool = models.ForeignKey(IPAMPool, on_delete=models.SET_NULL, null=True, blank=True, default=None)
+    subnet = models.CharField("Bridge IP Address (with mask). Eg. 192.168.1.2/24", max_length=20, blank=True, null=True, default="192.168.1.2/24")
+    dg = models.CharField("Bridge Default Gateway", max_length=20, blank=True, null=True, default=None)
+    addrpool = models.CharField("Client Address Pool", max_length=18, null=True, default=None, blank=True)
     interface = models.ForeignKey(Interface, on_delete=models.SET_NULL, null=True, blank=False, default=None)
     is_configured = models.BooleanField(default=False, editable=False)
+    networkid = models.CharField("Docker Network ID", max_length=64, null=True, default=None, blank=True)
+    force_rebuild = models.BooleanField("Force Rebuild of Docker Network", default=False, editable=True)
+    force_script = models.BooleanField("Force Impairment Script Update", default=False, editable=True)
+    skip_sync = models.BooleanField(default=False, editable=False)
+    last_update = models.DateTimeField(default=django.utils.timezone.now)
+    last_sync = models.DateTimeField(null=True, default=None, blank=True)
+    last_deployed_hash = models.CharField(max_length=32, blank=True, null=True, default=None)
 
     def __str__(self):
         return self.description + " (" + self.name + ")"
+
+    def dockernetwork(self):
+        return str(self.name)
+
+    def hostnetwork(self):
+        return str(self.name)
+
+    def networkimpairmentscript(self):
+        # wd = make_aware(datetime.datetime.now()).isoweekday()
+        # if wd == 7:
+        #     wd = 0
+        # t = datetime.datetime.time(datetime.datetime.now())
+        #
+        # evt = LinkEvent.objects.filter(network=self).filter(day__daynum=wd).filter(starttime__lte=t).filter(endtime__gte=t)
+        # # print(evt)
+        # if len(evt) > 0:
+        #     curevt = evt[0]
+        #     return curevt.linkprofile.tcdata
+        # else:
+        #     if self.linkprofile:
+        #         curpro = self.linkprofile
+        #     else:
+        #         pro = LinkProfile.objects.filter(default_profile=True)
+        #         curpro = pro[0]
+        #
+        #     return curpro.tcdata
+        if self.linkprofile:
+            curpro = self.linkprofile
+        else:
+            pro = LinkProfile.objects.filter(default_profile=True)
+            curpro = pro[0]
+
+        return curpro.tcdata
+
+    def networkimpairmentscripthash(self):
+        return hashlib.md5(self.networkimpairmentscript().encode("utf-8")).hexdigest()
 
 
 class ContainerType(models.Model):
@@ -585,6 +668,7 @@ class Network(models.Model):
     interface = models.ForeignKey(Interface, on_delete=models.SET_NULL, null=True, blank=False, default=None)
     linkprofile = models.ForeignKey(LinkProfile, verbose_name="Default Link Profile", on_delete=models.SET_NULL, null=True, blank=True, default=None)
     networktype = models.ForeignKey(NetworkType, on_delete=models.SET_NULL, null=True)
+    ippool = models.ForeignKey(IPAMPool, on_delete=models.SET_NULL, null=True, blank=True, default=None)
     vlan = models.IntegerField(blank=True, null=False, default=0)
     dot1q = models.BooleanField(default=False, editable=True)
     subnet = models.CharField(max_length=18, null=True, default=None, blank=True)
@@ -618,6 +702,9 @@ class Network(models.Model):
             return str(self.interface.name)
 
     def networkimpairmentscript(self):
+        if self.interface.name == "docker0":
+            return ""
+
         wd = make_aware(datetime.datetime.now()).isoweekday()
         if wd == 7:
             wd = 0
@@ -712,9 +799,10 @@ def generate_host():
 
 class Client(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    network = models.ForeignKey(Network, on_delete=models.SET_NULL, null=True)
+    network = models.ForeignKey(Network, on_delete=models.SET_NULL, null=True, blank=True)
+    bridge = models.ForeignKey(Bridge, on_delete=models.SET_NULL, null=True, blank=True)
     dashboard = models.ForeignKey(Dashboard, on_delete=models.SET_NULL, null=True, blank=True, default=None)
-    container = models.ForeignKey(Container, on_delete=models.SET_NULL, null=True)
+    container = models.ForeignKey(Container, on_delete=models.SET_NULL, null=True, blank=True, default=None)
     ipaddress = models.CharField(max_length=15, blank=True, null=True, default=None)
     macaddress = models.CharField(max_length=17, blank=True, unique=True, default=generate_mac)
     hostname = models.CharField(max_length=63, blank=True, unique=True, default=generate_host)

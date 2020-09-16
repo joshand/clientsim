@@ -22,9 +22,8 @@ from rest_framework.authtoken.views import obtain_auth_token
 from rest_framework.schemas import get_schema_view
 from rest_framework.renderers import JSONOpenAPIRenderer
 from client_sim import views
-from clientsim import tasks
 from clientsim import settings
-tasks.run_tasks()
+# tasks.run_tasks()
 
 router = routers.DefaultRouter()
 router.register(r'upload', views.UploadViewSet)
@@ -55,14 +54,31 @@ router.register(r'appevent', views.AppEventViewSet)
 schema_view = get_schema_view(title="Client Simulator API", renderer_classes=[JSONOpenAPIRenderer])
 
 urlpatterns = [
+    path('', views.dolanding, name='landing'),
+    path('login/', views.MyLoginView.as_view(), name='login'),
+    path('logout/', views.MyLogoutView.as_view(), name='logout'),
     path('admin/', admin.site.urls),
-    path('upload/', views.upload_file),
+    # path('upload/', views.upload_file, name='upload'),
     path('logs/', views.show_log),
     path('home/', views.show_home, name="home"),
+    url(r'^home/config-int$', views.config_int, name='config_int'),
+    url(r'^home/config-vlan$', views.config_vlan, name='config_vlan'),
+    url(r'^home/config-wireless$', views.config_wireless, name='config_wireless'),
+    url(r'^home/config-wired$', views.config_wired, name='config_wired'),
+    url(r'^home/config-upload$', views.upload_file, name='upload'),
+    url(r'^home/config-ipam$', views.config_ipam, name='config_ipam'),
+    url(r'^home/config-image$', views.config_image, name='config_image'),
+    url(r'^home/config-container$', views.config_container, name='config_container'),
+    url(r'^home/status-ipaddr$', views.status_ipaddr, name='status_ipaddr'),
+    url(r'^home/status-brctl$', views.status_brctl, name='status_brctl'),
+    url(r'^home/status-dockernet$', views.status_dockernet, name='status_dockernet'),
+    url(r'^home/status-dockerps$', views.status_dockerps, name='status_dockerps'),
+    url(r'^home/status-iwconfig$', views.status_iwconfig, name='status_iwconfig'),
+    url(r'^file', views.get_file, name='get_file'),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('api-token-auth/', obtain_auth_token, name='api_token_auth'),
     path('api/v0/schema/', schema_view),
     path(r'api/v0/', include(router.urls)),
 ]
 
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

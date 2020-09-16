@@ -6,8 +6,13 @@ class NetworkAdmin(admin.ModelAdmin):
     readonly_fields = ('networkid', 'last_update', 'last_sync', 'dockernetwork', 'hostnetwork', 'networkimpairmentscript', 'networkimpairmentscripthash', 'last_deployed_hash')
 
 
+class BridgeAdmin(admin.ModelAdmin):
+    readonly_fields = ('networkid', 'last_update', 'last_sync', 'dockernetwork', 'hostnetwork', 'networkimpairmentscript', 'networkimpairmentscripthash', 'last_deployed_hash')
+
+
 class ClientAdmin(admin.ModelAdmin):
-    readonly_fields = ('clientid', 'last_update', 'last_sync', 'dockercontainername', 'dockercontainerscript', 'dockercontainerscripthash', 'last_deployed_hash', 'last_sync_log', 'ipaddress')
+    # readonly_fields = ('clientid', 'last_update', 'last_sync', 'dockercontainername', 'dockercontainerscript', 'dockercontainerscripthash', 'last_deployed_hash', 'last_sync_log', 'ipaddress')
+    readonly_fields = ('last_update', 'last_sync', 'dockercontainername', 'dockercontainerscript', 'dockercontainerscripthash', 'last_deployed_hash', 'last_sync_log', 'ipaddress')
 
 
 class CloudAdmin(admin.ModelAdmin):
@@ -109,4 +114,5 @@ admin.site.register(CloudType)
 # admin.site.register(InstanceAutomation)
 admin.site.register(Task)
 admin.site.register(ServerSetting)
-admin.site.register(Bridge)
+admin.site.register(Bridge, BridgeAdmin)
+admin.site.register(IPAMPool)

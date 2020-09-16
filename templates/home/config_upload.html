@@ -1,0 +1,131 @@
+{% extends 'home/base.html' %}
+{% load extras %}
+
+{% block content %}
+    {% if file %}
+        <form method="POST" action="/home/config-upload" style="width:100%;padding:0px">
+            <div class="md-data-table" style="width: 100%;">
+                <div class="md-data-table__wrapper">
+                    File Upload -- {{ file.file }}
+                    <table class="testTableClass">
+                        <tbody class="md-data-table__tbody">
+                            <tr>
+                                <td>File Name</td>
+                                <td style="vertical-align: top">
+                                    <div class="md-input__wrapper">
+                                        <input class="md-input md-input--after md-dirty" tabindex="10" type="text" id="fileName-{{ file.id }}" name="fileName-{{ file.id }}" placeholder="File Name" value="{{ file.filename }}">
+                                        <span class="md-input__after">
+                                            <button class="md-button md-button--36 md-button--icon md-input__icon-clear" id="md-button-50" data-md-event-key="md-button-50" alt="clear input" type="button" aria-label="clear input" aria-pressed="" tabindex="110" onclick="clearinput('fileName-{{ image.id }}')">
+                                                <span class="md-button__children" style="opacity: 1;"><i class="md-icon icon icon-clear-active_16" style="font-size: 16px;"></i></span>
+                                            </button>
+                                        </span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Description</td>
+                                <td style="vertical-align: top">
+                                    <div class="md-input__wrapper">
+                                        <input class="md-input md-input--after md-dirty" tabindex="10" type="text" id="fileDesc-{{ file.id }}" name="fileDesc-{{ file.id }}" placeholder="Friendly File Description" value="{{ file.description }}">
+                                        <span class="md-input__after">
+                                            <button class="md-button md-button--36 md-button--icon md-input__icon-clear" id="md-button-50" data-md-event-key="md-button-50" alt="clear input" type="button" aria-label="clear input" aria-pressed="" tabindex="110" onclick="clearinput('fileDesc-{{ image.id }}')">
+                                                <span class="md-button__children" style="opacity: 1;"><i class="md-icon icon icon-clear-active_16" style="font-size: 16px;"></i></span>
+                                            </button>
+                                        </span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>File Path</td>
+                                <td>{{ file.fspath }}</td>
+                            </tr>
+                            <tr>
+                                <td>File Data</td>
+{#                                <td>{{ file.filedata|linenumbers|linebreaks }}</td>#}
+                                <td>
+                                    <div class="md-input__wrapper">
+                                        <textarea style="height: 250px" class="md-input md-input--after md-dirty" tabindex="10" id="fileContents-{{ file.id }}" name="fileContents-{{ file.id }}" placeholder="File Contents">{{ file.filedata }}</textarea>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="row">&nbsp;</div>
+            <div id="bottom_save">
+                <div class="md-panel md-panel__form" style="width:100%;padding:0px">
+                    {% csrf_token %}
+                    <div class="md-input-group" style="width:100%;padding:20px;background-color:#FFF5E0;border-color:#cbb013;border-width:1px;border-style:solid">
+                        <div class="md-input__icon-container">
+                            <div class="row" style="align-content:center; display:flex">
+                                <div class="md-input-container columns medium-6">
+                                    <div class="md-input__wrapper">
+                                        <button class="md-button md-button--blue" tabindex="50">Save Changes</button> or <a href="/home/config-image">cancel</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    {% else %}
+        <div class="md-data-table" style="width: 100%;">
+            <div class="md-data-table__wrapper">
+                <table class="testTableClass">
+                    Existing Files
+                    <thead class="md-data-table__thead">
+                        <tr>
+                            <th style="width: 16rem">File Name</th>
+                            <th style="width: 16rem">Description</th>
+                            <th style="width: 16rem">Date</th>
+                            <th style="width: 4rem"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="md-data-table__tbody">
+                    {% for i in data %}
+                        <tr>
+                            <td><a href="/home/config-upload?id={{ i.id }}&action=editupload">{{ i.filename }}</a></td>
+                            <td>{{ i.description }}</td>
+                            <td>{{ i.uploaded_at }}</td>
+                            <td>
+                                <a href="/home/config-upload?id={{ i.id }}&action=delupload"><span class="icon icon-delete_24"></span></a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <br>
+        <form method="POST" action="/home/config-upload" enctype="multipart/form-data" style="width:100%;padding:0px">
+            <div class="md-data-table" style="width: 100%">
+                <div class="md-data-table__wrapper">
+                    Upload New File
+
+                    {{ form.as_p }}
+
+                    <div class="row">&nbsp;</div>
+                    <div id="bottom_save">
+                        <div class="md-panel md-panel__form" style="width:100%;padding:0px">
+                            {% csrf_token %}
+                            <div class="md-input-group" style="width:100%;padding:20px;background-color:#FFF5E0;border-color:#cbb013;border-width:1px;border-style:solid">
+                                <div class="md-input__icon-container">
+                                    <div class="row" style="align-content:center; display:flex">
+                                        <div class="md-input-container columns medium-6">
+                                            <div class="md-input__wrapper">
+                                                <button class="md-button md-button--blue" tabindex="50">Upload</button> or <a href="/home/config-upload">cancel</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    {% endif %}
+{% endblock %}

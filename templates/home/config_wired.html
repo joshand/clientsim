@@ -1,0 +1,55 @@
+{% extends 'home/base.html' %}
+{% load extras %}
+
+{% block content %}
+    <form method="POST" action="/home/config-wired" style="width:100%;padding:0px">
+        <div class="md-data-table" style="width: 100%;">
+            <div class="md-data-table__wrapper">
+                WiFi Profiles <a href="/home/config-wired?action=addprofile"><span style="font-size: x-small">[Add Profile]</span></a>
+                <table class="testTableClass">
+                    <thead class="md-data-table__thead">
+                        <tr>
+                            <th style="width: 12rem">Description</th>
+                            <th style="width: 32rem">Configuration</th>
+                        </tr>
+                    </thead>
+                    <tbody class="md-data-table__tbody">
+                    {% for i in data %}
+                        <tr><td style="vertical-align: top">
+                            <div class="md-input__wrapper">
+                                <input class="md-input md-input--after md-dirty" tabindex="10" type="text" id="profDesc-{{ i.id }}" name="profDesc-{{ i.id }}" placeholder="Friendly Profile Description" value="{{ i.description }}">
+                                <span class="md-input__after">
+                                    <button class="md-button md-button--36 md-button--icon md-input__icon-clear" id="md-button-50" data-md-event-key="md-button-50" alt="clear input" type="button" aria-label="clear input" aria-pressed="" tabindex="110" onclick="clearinput('profDesc-{{ n.id }}')">
+                                        <span class="md-button__children" style="opacity: 1;"><i class="md-icon icon icon-clear-active_16" style="font-size: 16px;"></i></span>
+                                    </button>
+                                </span>
+                            </div>
+                        </td><td>
+                            <div class="md-input__wrapper">
+                                <textarea style="height: 250px" class="md-input md-input--after md-dirty" tabindex="10" id="profCfg-{{ i.id }}" name="profCfg-{{ i.id }}" placeholder="Profile Configuration">{{ i.tcdata }}</textarea>
+                            </div>
+                        </></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="row">&nbsp;</div>
+        <div id="bottom_save">
+            <div class="md-panel md-panel__form" style="width:100%;padding:0px">
+                {% csrf_token %}
+                <div class="md-input-group" style="width:100%;padding:20px;background-color:#FFF5E0;border-color:#cbb013;border-width:1px;border-style:solid">
+                    <div class="md-input__icon-container">
+                        <div class="row" style="align-content:center; display:flex">
+                            <div class="md-input-container columns medium-6">
+                                <div class="md-input__wrapper">
+                                    <button class="md-button md-button--blue" tabindex="50">Save Changes</button> or <a href="/home/config-wired">cancel</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+{% endblock %}

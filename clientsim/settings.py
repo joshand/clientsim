@@ -125,7 +125,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 MEDIA_URL = '/'
-MEDIA_ROOT = '/'
+MEDIA_ROOT = '/var/www/clientsim'
 
 TRUNK_INTERFACE = ""
 DEFAULT_HOSTLEN = 8
@@ -143,3 +143,5 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     )
 }
+
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 100000

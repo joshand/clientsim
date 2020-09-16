@@ -1,199 +1,190 @@
 [{
-		"model": "client_sim.instanceautomation",
-		"fields": {
-			"description": "ONA Deployment (Ubuntu)",
-			"rawdata": "sudo echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections\r\nwget -nv https://gist.githubusercontent.com/gretel/34008d667a8a243a9682e5207619ad95/raw/6e9999ed746afcaab1eeaf75fb362f8e9289b00d/wait_unattended_upgrades.sh\r\nsudo chmod +x ~/wait_unattended_upgrades.sh\r\nsudo ./wait_unattended_upgrades.sh apt dpkg unattended-upgrade\r\nsudo apt-get -y update && sudo apt-get -y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold upgrade\r\nsudo ./wait_unattended_upgrades.sh apt dpkg unattended-upgrade\r\nsudo apt-get -y update && sudo apt-get -y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold upgrade\r\nsudo ./wait_unattended_upgrades.sh apt dpkg unattended-upgrade\r\nsudo apt-get -y install quagga telnet python2.7 net-tools tcpdump libglib2.0-0 liblzo2-2 libltdl7 -f\r\nwget -nv https://onstatic.s3.amazonaws.com/ona/master/ona-service_UbuntuXenial_amd64.deb\r\nwget -nv https://github.com/bbayles/netsa-pkg/releases/download/v0.1.15/netsa-pkg.deb\r\nsudo dpkg -i netsa-pkg.deb\r\nsudo dpkg -i ona-service_UbuntuXenial_amd64.deb\r\ncat >~/bgpd.conf <<EOL{{bgp.conf.template}}EOL\r\ncat >~/zebra.conf <<EOL{{zebra.conf.template}}EOL\r\ncat >~/vtysh.conf <<EOL{{vtysh.conf.template}}EOL\r\nsudo cp ~/*.conf /etc/quagga/\r\ncat >~/config.local <<EOL{{config.local.template}}EOL\r\nsudo cp ~/config.local /opt/obsrvbl-ona/config.local\r\nsudo chmod -R 755 /etc/quagga\r\nsudo systemctl enable zebra.service\r\nsudo systemctl enable bgpd.service\r\nsudo service zebra start\r\nsudo service bgpd start\r\n#sudo reboot"
-		}
-	},
-	{
-		"model": "client_sim.instanceautomation",
-		"fields": {
-			"description": "Deploy OpenRESTy",
-			"rawdata": "sudo apt-get -y install --no-install-recommends wget gnupg ca-certificates\r\nwget -O - https://openresty.org/package/pubkey.gpg | sudo apt-key add -\r\nsudo apt-get -y install --no-install-recommends software-properties-common\r\nsudo add-apt-repository -y \"deb http://openresty.org/package/ubuntu $(lsb_release -sc) main\"\r\nsudo apt-get update\r\nsudo apt-get -y install --no-install-recommends openresty\r\nsudo systemctl stop openresty\r\ncat >~/nginx.conf <<EOL{{nginx.conf}}EOL\r\ncat >~/delay.html <<EOL{{delay.html}}EOL\r\ncat >~/style.css <<EOL{{style.css}}EOL\r\nsudo mkdir /usr/local/openresty/nginx/html/images\r\nrm Lake_Superior_Aurora.jpg\r\nrm cisco-meraki-logo.png\r\nwget https://upload.wikimedia.org/wikipedia/commons/8/8c/Lake_Superior_Aurora.jpg\r\nwget https://meraki.cisco.com/img/cisco-meraki-logo.png\r\nsudo cp ~/nginx.conf /usr/local/openresty/nginx/conf/nginx.conf\r\nsudo cp ~/delay.html /usr/local/openresty/nginx/html/delay.html\r\nsudo cp ~/style.css /usr/local/openresty/nginx/html/style.css\r\nsudo cp ~/Lake_Superior_Aurora.jpg /usr/local/openresty/nginx/html/images/aurora.jpg\r\nsudo cp ~/cisco-meraki-logo.png /usr/local/openresty/nginx/html/images/Color_Digital.png\r\nsudo systemctl start openresty\r\nsudo systemctl enable openresty"
-		}
-	},
-	{
-		"model": "client_sim.networktype",
-		"fields": {
-			"driver": "ipvlan",
-			"driveropt": "{\"ipvlan_mode\": \"l2\"}",
-			"description": "IP VLAN (L2)"
-		}
-	},
-	{
-		"model": "client_sim.networktype",
-		"fields": {
-			"driver": "bridge",
-			"driveropt": null,
-			"description": "Interface Bridge"
-		}
-	},
-	{
-		"model": "client_sim.networktype",
-		"fields": {
-			"driver": "bridge",
-			"driveropt": null,
-			"description": "Default Docker Bridge"
-		}
-	},
-	{
-		"model": "client_sim.networktype",
-		"fields": {
-			"driver": "ipvlan",
-			"driveropt": "{\"ipvlan_mode\": \"l3\"}",
-			"description": "IP VLAN (L3)"
-		}
-	},
-	{
-		"model": "client_sim.networktype",
-		"fields": {
-			"driver": "macvlan",
-			"driveropt": null,
-			"description": "VLAN Interface"
-		}
-	},
-	{
-		"model": "client_sim.containertype",
-		"pk": "00000000-1111-2222-3333-444444444444",
-		"fields": {
-			"name": "DOCKERFILE",
-			"description": "Docker Build using Dockerfile"
-		}
-	},
-	{
-		"model": "client_sim.containertype",
-		"pk": "11111111-2222-3333-4444-555555555555",
-		"fields": {
-			"name": "PUBLISHED",
-			"description": "Published Container"
-		}
-	},
-	{
-		"model": "client_sim.container",
-		"fields": {
-			"containertype": "00000000-1111-2222-3333-444444444444",
-			"path": "mikewootini/wget",
-			"cmd": "/bin/sh",
-			"dockerfile": "FROM mikewootini/wget\r\nRUN apt-get update && apt-get upgrade -y && apt-get install -y tsocks\r\nADD http://{{server_ip}}:8000/file/tsocks.conf /etc/tsocks.conf\r\nRUN \"/bin/sh\"",
-			"buildcontainername": "wget_proxy",
-			"clientscript": "#!/bin/bash\r\nua=\"{{user_agent}}\"\r\nurl_list=( {{app_urls}} )\r\nproxy_list=( {{app_delays}} )\r\nwhile [ 1 -eq 1 ]; do\r\n    n=`expr $RANDOM % {{app_count}}`\r\n    wait=`expr $RANDOM % 10`\r\n    url=${url_list[$n]}\r\n    proxy=http://delay:${proxy_list[$n]}@{{server_ip}}:9011/\r\n    if [ ${proxy_list[$n]} -gt 0 ]\r\n    then\r\n        export TSOCKS_PASSWORD=${proxy_list[$n]}\r\n        tsocks wget --delete-after --user-agent=\"$ua\" -p $url -o /proc/1/fd/1\r\n    else\r\n        wget --delete-after --user-agent=\"$ua\" -p $url -o /proc/1/fd/1\r\n    fi\r\n    sleep $wait\r\ndone",
-			"description": "(Custom) HTTP GET a list of URLs",
-			"active": true
-		}
-	},
-	{
-		"model": "client_sim.container",
-		"fields": {
-			"containertype": "11111111-2222-3333-4444-555555555555",
-			"path": "mikewootini/wget",
-			"cmd": "/bin/sh",
-			"dockerfile": null,
-			"buildcontainername": null,
-			"clientscript": "#!/bin/bash\r\nua=\"{{user_agent}}\"\r\nurl_list=( {{app_urls}} )\r\nwhile [ 1 -eq 1 ]; do\r\n    n=`expr $RANDOM % {{app_count}}`\r\n    wait=`expr $RANDOM % 10`\r\n    url=${url_list[$n]}\r\n    wget --delete-after --user-agent=\"$ua\" -p $url -o /proc/1/fd/1\r\n    sleep $wait\r\ndone",
-			"description": "HTTP GET a list of URLs",
-			"active": true
-		}
-	},
-	{
-		"model": "client_sim.app",
-		"fields": {
-			"description": "CNN",
-			"appurl": "https://www.cnn.com"
-		}
-	},
-	{
-		"model": "client_sim.app",
-		"fields": {
-			"description": "Youtube",
-			"appurl": "https://www.youtube.com"
-		}
-	},
-	{
-		"model": "client_sim.appprofile",
-		"fields": {
-			"description": "Normal (No Delay)",
-			"pdelay": 0
-		}
-	},
-	{
-		"model": "client_sim.linkprofile",
-		"fields": {
-			"description": "Satellite Network Connection",
-			"default_profile": false,
-			"tcdata": "tc qdisc del dev {{interface}}\r\ntc qdisc add dev {{interface}} root handle 1: tbf rate 64Kbit burst 512b lat 1.0s \r\ntc qdisc add dev {{interface}} parent 1:1 handle 10: netem limit 1000 delay 3.0s  800.0ms 25% loss 40% 25% duplicate 1% reorder 15% 50% corrupt 1% gap 1\r\ntc qdisc show dev {{interface}}"
-		}
-	},
-	{
-		"model": "client_sim.linkprofile",
-		"fields": {
-			"description": "Normal (No Delay)",
-			"default_profile": true,
-			"tcdata": "tc qdisc del dev {{interface}}\r\ntc qdisc show dev {{interface}}"
-		}
-	},
-	{
-		"model": "client_sim.linkprofile",
-		"fields": {
-			"description": "International Network Connection",
-			"default_profile": false,
-			"tcdata": "tc qdisc del dev {{interface}}\r\ntc qdisc add dev {{interface}} root handle 1: tbf rate 256kbit buffer 1600 limit 3000\r\ntc qdisc add dev {{interface}} parent 1:1 handle 10: netem delay 200ms 40ms 25% loss 15.3% 25% duplicate 1% corrupt 0.1% reorder 5% 50%\r\ntc qdisc show dev {{interface}}"
-		}
-	},
-	{
-		"model": "client_sim.linkprofile",
-		"fields": {
-			"description": "Sample WiFi Connection",
-			"default_profile": false,
-			"tcdata": "ip link set {{interface}} down\r\nrm -f /var/run/wpa_supplicant/{{interface}}\r\nip link set {{interface}} up\r\necho $'ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev\\nupdate_config=1\\ncountry=US\\n\\nnetwork={\\n    ssid=\"Your-SSID-Here\"\\n    psk=\"Your-PSK-Here\"\\n    key_mgmt=WPA-PSK\\n}' > /tmp/{{interface}}.conf\r\nwpa_supplicant -B -c /tmp/{{interface}}.conf -i {{interface}}"
-		}
-	},
-	{
-		"model": "client_sim.eventday",
-		"fields": {
-			"daynum": 2,
-			"dayname": "Tuesday"
-		}
-	},
-	{
-		"model": "client_sim.eventday",
-		"fields": {
-			"daynum": 5,
-			"dayname": "Friday"
-		}
-	},
-	{
-		"model": "client_sim.eventday",
-		"fields": {
-			"daynum": 3,
-			"dayname": "Wednesday"
-		}
-	},
-	{
-		"model": "client_sim.eventday",
-		"fields": {
-			"daynum": 1,
-			"dayname": "Monday"
-		}
-	},
-	{
-		"model": "client_sim.eventday",
-		"fields": {
-			"daynum": 4,
-			"dayname": "Thursday"
-		}
-	},
-	{
-		"model": "client_sim.eventday",
-		"fields": {
-			"daynum": 6,
-			"dayname": "Saturday"
-		}
-	},
-	{
-		"model": "client_sim.eventday",
-		"fields": {
-			"daynum": 0,
-			"dayname": "Sunday"
-		}
+	"model": "client_sim.instanceautomation",
+	"fields": {
+		"description": "ONA Deployment (Ubuntu)",
+		"rawdata": "sudo echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections\r\nwget -nv https://gist.githubusercontent.com/gretel/34008d667a8a243a9682e5207619ad95/raw/6e9999ed746afcaab1eeaf75fb362f8e9289b00d/wait_unattended_upgrades.sh\r\nsudo chmod +x ~/wait_unattended_upgrades.sh\r\nsudo ./wait_unattended_upgrades.sh apt dpkg unattended-upgrade\r\nsudo apt-get -y update && sudo apt-get -y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold upgrade\r\nsudo ./wait_unattended_upgrades.sh apt dpkg unattended-upgrade\r\nsudo apt-get -y update && sudo apt-get -y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold upgrade\r\nsudo ./wait_unattended_upgrades.sh apt dpkg unattended-upgrade\r\nsudo apt-get -y install quagga telnet python2.7 net-tools tcpdump libglib2.0-0 liblzo2-2 libltdl7 -f\r\nwget -nv https://onstatic.s3.amazonaws.com/ona/master/ona-service_UbuntuXenial_amd64.deb\r\nwget -nv https://github.com/bbayles/netsa-pkg/releases/download/v0.1.15/netsa-pkg.deb\r\nsudo dpkg -i netsa-pkg.deb\r\nsudo dpkg -i ona-service_UbuntuXenial_amd64.deb\r\ncat >~/bgpd.conf <<EOL{{bgp.conf.template}}EOL\r\ncat >~/zebra.conf <<EOL{{zebra.conf.template}}EOL\r\ncat >~/vtysh.conf <<EOL{{vtysh.conf.template}}EOL\r\nsudo cp ~/*.conf /etc/quagga/\r\ncat >~/config.local <<EOL{{config.local.template}}EOL\r\nsudo cp ~/config.local /opt/obsrvbl-ona/config.local\r\nsudo chmod -R 755 /etc/quagga\r\nsudo systemctl enable zebra.service\r\nsudo systemctl enable bgpd.service\r\nsudo service zebra start\r\nsudo service bgpd start\r\n#sudo reboot"
 	}
-]
+}, {
+	"model": "client_sim.instanceautomation",
+	"fields": {
+		"description": "Deploy OpenRESTy",
+		"rawdata": "sudo apt-get -y install --no-install-recommends wget gnupg ca-certificates\r\nwget -O - https://openresty.org/package/pubkey.gpg | sudo apt-key add -\r\nsudo apt-get -y install --no-install-recommends software-properties-common\r\nsudo add-apt-repository -y \"deb http://openresty.org/package/ubuntu $(lsb_release -sc) main\"\r\nsudo apt-get update\r\nsudo apt-get -y install --no-install-recommends openresty\r\nsudo systemctl stop openresty\r\ncat >~/nginx.conf <<EOL{{nginx.conf}}EOL\r\ncat >~/delay.html <<EOL{{delay.html}}EOL\r\ncat >~/style.css <<EOL{{style.css}}EOL\r\nsudo mkdir /usr/local/openresty/nginx/html/images\r\nrm Lake_Superior_Aurora.jpg\r\nrm cisco-meraki-logo.png\r\nwget https://upload.wikimedia.org/wikipedia/commons/8/8c/Lake_Superior_Aurora.jpg\r\nwget https://meraki.cisco.com/img/cisco-meraki-logo.png\r\nsudo cp ~/nginx.conf /usr/local/openresty/nginx/conf/nginx.conf\r\nsudo cp ~/delay.html /usr/local/openresty/nginx/html/delay.html\r\nsudo cp ~/style.css /usr/local/openresty/nginx/html/style.css\r\nsudo cp ~/Lake_Superior_Aurora.jpg /usr/local/openresty/nginx/html/images/aurora.jpg\r\nsudo cp ~/cisco-meraki-logo.png /usr/local/openresty/nginx/html/images/Color_Digital.png\r\nsudo systemctl start openresty\r\nsudo systemctl enable openresty"
+	}
+}, {
+	"model": "client_sim.networktype",
+	"fields": {
+		"driver": "ipvlan",
+		"driveropt": "{\"ipvlan_mode\": \"l3\"}",
+		"description": "IP VLAN (L3)"
+	}
+}, {
+	"model": "client_sim.networktype",
+	"fields": {
+		"driver": "macvlan",
+		"driveropt": null,
+		"description": "VLAN Interface"
+	}
+}, {
+	"model": "client_sim.networktype",
+	"fields": {
+		"driver": "ipvlan",
+		"driveropt": "{\"ipvlan_mode\": \"l2\"}",
+		"description": "IP VLAN (L2)"
+	}
+}, {
+	"model": "client_sim.networktype",
+	"fields": {
+		"driver": "bridge",
+		"driveropt": null,
+		"description": "Interface Bridge"
+	}
+}, {
+	"model": "client_sim.networktype",
+	"fields": {
+		"driver": "bridge",
+		"driveropt": null,
+		"description": "Default Docker Bridge"
+	}
+}, {
+	"model": "client_sim.linkprofile",
+	"fields": {
+		"description": "Test PSK",
+		"default_profile": false,
+		"is_wireless": true,
+		"tcdata": "ip link set {{interface}} down\r\nrm -f /var/run/wpa_supplicant/{{interface}}\r\ncat /tmp/{{interface}}.pid | xargs kill -9\r\nip link set {{interface}} up\r\necho 'ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=0\\nupdate_config=1\\ncountry=US\\n\\nnetwork={\\n    ssid=\"{---YOUR SSID HERE---}\"\\n    psk=\"{---YOUR PSK HERE---}\"\\n    key_mgmt=WPA-PSK\\n    scan_ssid=1\\n}' > /tmp/{{interface}}.conf\r\nwpa_supplicant -B -c /tmp/{{interface}}.conf -i {{interface}} -P /tmp/{{interface}}.pid"
+	}
+}, {
+	"model": "client_sim.linkprofile",
+	"fields": {
+		"description": "International Internet",
+		"default_profile": false,
+		"is_wireless": false,
+		"tcdata": "tc qdisc del dev {{interface}}\r\ntc qdisc add dev {{interface}} root handle 1: tbf rate 256kbit buffer 1600 limit 3000\r\ntc qdisc add dev {{interface}} parent 1:1 handle 10: netem delay 200ms 40ms 25% loss 15.3% 25% duplicate 1% corrupt 0.1% reorder 5% 50%\r\ntc qdisc show dev {{interface}}"
+	}
+}, {
+	"model": "client_sim.linkprofile",
+	"fields": {
+		"description": "Normal (No Delay)",
+		"default_profile": true,
+		"is_wireless": false,
+		"tcdata": "tc qdisc del dev {{interface}}\r\ntc qdisc show dev {{interface}}"
+	}
+}, {
+	"model": "client_sim.linkprofile",
+	"fields": {
+		"description": "Satellite Internet",
+		"default_profile": false,
+		"is_wireless": false,
+		"tcdata": "tc qdisc del dev {{interface}}\r\ntc qdisc add dev {{interface}} root handle 1: tbf rate 64Kbit burst 512b lat 1.0s \r\ntc qdisc add dev {{interface}} parent 1:1 handle 10: netem limit 1000 delay 3.0s  800.0ms 25% loss 40% 25% duplicate 1% reorder 15% 50% corrupt 1% gap 1\r\ntc qdisc show dev {{interface}}"
+	}
+}, {
+	"model": "client_sim.containertype",
+	"pk": "00000000-1111-2222-3333-444444444444",
+	"fields": {
+		"name": "DOCKERFILE",
+		"description": "Docker Build using Dockerfile"
+	}
+}, {
+	"model": "client_sim.containertype",
+	"pk": "11111111-2222-3333-4444-555555555555",
+	"fields": {
+		"name": "PUBLISHED",
+		"description": "Published Container"
+	}
+}, {
+	"model": "client_sim.container",
+	"fields": {
+		"containertype": "11111111-2222-3333-4444-555555555555",
+		"path": "mikewootini/wget",
+		"cmd": "/bin/sh",
+		"dockerfile": null,
+		"buildcontainername": null,
+		"clientscript": "#!/bin/bash\r\nua=\"{{user_agent}}\"\r\nurl_list=( {{app_urls}} )\r\nwhile [ 1 -eq 1 ]; do\r\n    n=`expr $RANDOM % {{app_count}}`\r\n    wait=`expr $RANDOM % 10`\r\n    url=${url_list[$n]}\r\n    wget --delete-after --user-agent=\"$ua\" -p $url -o /proc/1/fd/1\r\n    sleep $wait\r\ndone",
+		"description": "HTTP GET a list of URLs",
+		"active": true
+	}
+}, {
+	"model": "client_sim.container",
+	"fields": {
+		"containertype": "00000000-1111-2222-3333-444444444444",
+		"path": "mikewootini/wget",
+		"cmd": "/bin/sh",
+		"dockerfile": "FROM mikewootini/wget\r\nRUN apt-get update && apt-get upgrade -y && apt-get install -y tsocks\r\nADD {<tsocks.conf>} /etc/tsocks.conf\r\nRUN \"/bin/sh\"",
+		"buildcontainername": "wget_proxy",
+		"clientscript": "#!/bin/bash\r\nua=\"{{user_agent}}\"\r\nurl_list=( {{app_urls}} )\r\nproxy_list=( {{app_delays}} )\r\nwhile [ 1 -eq 1 ]; do\r\n    n=`expr $RANDOM % {{app_count}}`\r\n    wait=`expr $RANDOM % 10`\r\n    url=${url_list[$n]}\r\n    proxy=http://delay:${proxy_list[$n]}@{{server_ip}}:9011/\r\n    if [ ${proxy_list[$n]} -gt 0 ]\r\n    then\r\n        export TSOCKS_PASSWORD=${proxy_list[$n]}\r\n        tsocks wget --delete-after --user-agent=\"$ua\" -p $url -o /proc/1/fd/1\r\n    else\r\n        wget --delete-after --user-agent=\"$ua\" -p $url -o /proc/1/fd/1\r\n    fi\r\n    sleep $wait\r\ndone",
+		"description": "(Custom) HTTP GET URLs",
+		"active": true
+	}
+}, {
+	"model": "client_sim.container",
+	"fields": {
+		"containertype": "00000000-1111-2222-3333-444444444444",
+		"path": "openresty/openresty",
+		"cmd": "/bin/sh",
+		"dockerfile": "FROM openresty/openresty\r\nRUN apt-get -o Acquire::Check-Valid-Until=false update && apt-get -o Acquire::Check-Valid-Until=false upgrade -y && apt-get -o Acquire::Check-Valid-Until=false install -y wget net-tools iputils-ping\r\nRUN mkdir -p /usr/local/openresty/nginx/html/images\r\nADD {<nginx.conf>} /usr/local/openresty/nginx/conf/\r\nADD {<delay.html>} /usr/local/openresty/nginx/html/\r\nADD {<style.css>} /usr/local/openresty/nginx/html/\r\nRUN wget https://upload.wikimedia.org/wikipedia/commons/8/8c/Lake_Superior_Aurora.jpg -O /usr/local/openresty/nginx/html/images/aurora.jpg\r\nRUN wget https://meraki.cisco.com/img/cisco-meraki-logo.png -O /usr/local/openresty/nginx/html/images/Color_Digital.png\r\nCMD [\"/usr/local/openresty/bin/openresty\", \"-g\", \"daemon off;\"]",
+		"buildcontainername": "delay-server",
+		"clientscript": "",
+		"description": "OpenResty",
+		"active": true
+	}
+}, {
+	"model": "client_sim.app",
+	"fields": {
+		"description": "CNN",
+		"appurl": "https://www.cnn.com"
+	}
+}, {
+	"model": "client_sim.app",
+	"fields": {
+		"description": "Youtube",
+		"appurl": "https://www.youtube.com"
+	}
+}, {
+	"model": "client_sim.appprofile",
+	"fields": {
+		"description": "Normal (No Delay)",
+		"pdelay": 0
+	}
+}, {
+	"model": "client_sim.eventday",
+	"fields": {
+		"daynum": 2,
+		"dayname": "Tuesday"
+	}
+}, {
+	"model": "client_sim.eventday",
+	"fields": {
+		"daynum": 3,
+		"dayname": "Wednesday"
+	}
+}, {
+	"model": "client_sim.eventday",
+	"fields": {
+		"daynum": 0,
+		"dayname": "Sunday"
+	}
+}, {
+	"model": "client_sim.eventday",
+	"fields": {
+		"daynum": 1,
+		"dayname": "Monday"
+	}
+}, {
+	"model": "client_sim.eventday",
+	"fields": {
+		"daynum": 4,
+		"dayname": "Thursday"
+	}
+}, {
+	"model": "client_sim.eventday",
+	"fields": {
+		"daynum": 6,
+		"dayname": "Saturday"
+	}
+}, {
+	"model": "client_sim.eventday",
+	"fields": {
+		"daynum": 5,
+		"dayname": "Friday"
+	}
+}]

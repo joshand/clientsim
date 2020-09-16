@@ -1,10 +1,9 @@
-import atexit
-from apscheduler.schedulers.background import BackgroundScheduler
-from client_sim.models import *
 from scripts.dblog import *
+# from django_apscheduler.models import DjangoJobExecution
 
 
 def cleanup():
+    # DjangoJobExecution.objects.delete_old_job_executions(3600)
     log = []
     task_types = ["client_monitor", "cloud_monitor", "interface_monitor", "network_monitor"]
     for t in task_types:
@@ -21,15 +20,4 @@ def cleanup():
 
 
 def run():
-    # Enable the job scheduler to run schedule jobs
-    cron = BackgroundScheduler()
-
-    # Explicitly kick off the background thread
-    cron.start()
-    cron.remove_all_jobs()
-    job0 = cron.add_job(cleanup)
-    job1 = cron.add_job(cleanup, 'interval', seconds=60)
-
-    # Shutdown your cron thread if the web process is stopped
-    atexit.register(lambda: cron.shutdown(wait=False))
-
+    cleanup()

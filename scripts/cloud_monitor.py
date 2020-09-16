@@ -1,7 +1,7 @@
-import atexit
+# import atexit
 import docker
 from docker import types
-from apscheduler.schedulers.background import BackgroundScheduler
+# from apscheduler.schedulers.background import BackgroundScheduler
 from client_sim.models import *
 from django.conf import settings
 from django.utils.timezone import make_aware
@@ -922,14 +922,4 @@ def sync_cloud():
 
 
 def run():
-    # Enable the job scheduler to run schedule jobs
-    cron = BackgroundScheduler()
-
-    # Explicitly kick off the background thread
-    cron.start()
-    cron.remove_all_jobs()
-    job0 = cron.add_job(sync_cloud)
-    job1 = cron.add_job(sync_cloud, 'interval', seconds=10)
-
-    # Shutdown your cron thread if the web process is stopped
-    atexit.register(lambda: cron.shutdown(wait=False))
+    sync_cloud()

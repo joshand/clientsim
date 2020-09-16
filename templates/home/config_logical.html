@@ -1,0 +1,358 @@
+{% extends 'home/base.html' %}
+{% load extras %}
+
+{% block content %}
+    <form method="POST" action="/home/config-vlan" style="width:100%;padding:0px">
+        <div class="md-data-table" style="width: 100%">
+            <div class="md-data-table__wrapper">
+                {% for i in data %}
+                {% if i.active %}
+                <div>
+                {% else %}
+                <div style="background-color: lightcoral">
+                {% endif %}
+                    {{ i.name }} ({{ i.description }})
+                    {% if i.name != "docker0" and i.wired %}
+                        <a href="/home/config-vlan?id={{ i.id }}&action=addvlan"><span style="font-size: x-small">[Add VLAN]</span></a>
+                    {% endif %}
+                    {% if i.name != "docker0" %}
+                        <a href="/home/config-vlan?id={{ i.id }}&action=makebridge"><span style="font-size: x-small">[Make Bridge]</span></a>
+                    {% endif %}
+
+                    {% if i.bridge_set.all|length > 0 %}
+                        <table class="testTableClass">
+                            {% if i.active %}
+                            <thead class="md-data-table__thead">
+                            {% else %}
+                            <thead class="md-data-table__thead__disabled">
+                            {% endif %}
+                                <tr>
+                                    <th style="width: 8rem;">Bridge</th>
+                                    <th style="width: 16rem">Description</th>
+{#                                    <th style="width: 12rem">Address Pool</th>#}
+                                    <th style="width: 12rem">Subnet</th>
+                                    <th style="width: 12rem">Gateway</th>
+                                    <th style="width: 12rem">Address Pool/Mask</th>
+                                    <th style="width: 16rem">Profile</th>
+                                    <th style="width: 4rem"></th>
+                                </tr>
+                            </thead>
+                            <tbody class="md-data-table__tbody">
+                                {% for n in i.bridge_set.all %}
+                                    <tr>
+                                    <td>{{ n.name }}</td>
+                                    <td>
+                                        <div class="md-input__wrapper">
+                                            <input style="font-size: small" class="md-input md-input--after md-dirty" tabindex="11" type="text" id="briDesc-{{ n.id }}" name="briDesc-{{ n.id }}" placeholder="Friendly Bridge Description" value="{{ n.description }}">
+                                            <span class="md-input__after">
+                                                <button class="md-button md-button--36 md-button--icon md-input__icon-clear" id="md-button-50" data-md-event-key="md-button-50" alt="clear input" type="button" aria-label="clear input" aria-pressed="" tabindex="111" onclick="clearinput('briDesc-{{ n.id }}')">
+                                                    <span class="md-button__children" style="opacity: 1;"><i class="md-icon icon icon-clear-active_16" style="font-size: 16px;"></i></span>
+                                                </button>
+                                            </span>
+                                        </div>
+                                    </td>
+{#                                    <td>#}
+{#                                        <div class="md-input-container columns medium-12" id="briPool-container">#}
+{#                                            <div class="md-input__wrapper md-select">#}
+{#                                                <button id="briPool-btn-{{ n.id }}" class="ignore md-button md-button--36 active" alt="" type="button" aria-labelledby="briPool-label-{{ n.id }}" tabindex="30" name="md-select-69" aria-haspopup="listbox" onclick="toggleList('briPool-btn-{{ n.id }}', 'briPool-dropdown-{{ n.id }}', 'briPool-list-{{ n.id }}')">#}
+{#                                                    <span class="ignore md-button__children" style="opacity: 1;">#}
+{#                                                        <div style="font-size: small" class="ignore md-list-item__left" id="briPool-label-{{ n.id }}">#}
+{#                                                            {% if n.ippool %}#}
+{#                                                                {{ n.ippool.description }}#}
+{#                                                            {% else %}#}
+{#                                                                None#}
+{#                                                            {% endif %}#}
+{#                                                            <i class="ignore icon icon-arrow-down_16"></i>#}
+{#                                                        </div>#}
+{#                                                    </span>#}
+{#                                                </button>#}
+{#                                                <div class="md-event-overlay md-event-overlay--bottom" id="briPool-dropdown-{{ n.id }}" style="display:none;">#}
+{#                                                    <div class="md-event-overlay__children" id="briPool-list-{{ n.id }}">#}
+{#                                                        <div id="briPool-content" class="md-list md-list--vertical md-list" role="listbox" aria-labelledby="md-select-69__label" aria-multiselectable="false">#}
+{#                                                            {% for element in pools %}#}
+{#                                                            <div aria-current="true" class="md-list-item" id="md-list-73__so-item" role="option" value="{{ element.id }}" tabindex="0" title="{{ element.description }}">#}
+{#                                                                <div style="font-size: small" class="md-list-item__center" onclick="listclick('{{ element.id }}', '{{ element.description }}', 'briPool-label-{{ n.id }}', 'briPool-id-{{ n.id }}', 'briPool-name-{{ n.id }}', '')">{{ element.description }}</div>#}
+{#                                                                <div class="md-list-item__right"></div>#}
+{#                                                            </div>#}
+{#                                                            {% endfor %}#}
+{#                                                        </div>#}
+{#                                                    </div>#}
+{#                                                </div>#}
+{#                                            </div>#}
+{#                                        </div>#}
+{#                                        <input type="hidden" id="briPool-id-{{ n.id }}" name="briPool-id-{{ n.id }}" value="{{ n.ippool.id }}" />#}
+{#                                        <input type="hidden" id="briPool-name-{{ n.id }}" name="briPool-name-{{ n.id }}" value="" />#}
+{#                                    </td>#}
+                                    <td>
+                                        <div class="md-input__wrapper">
+                                            <input style="font-size: small" class="md-input md-input--after md-dirty" tabindex="12" type="text" id="briSub-{{ n.id }}" name="briSub-{{ n.id }}" placeholder="Subnet with /mask" value="{{ n.subnet }}">
+                                            <span class="md-input__after">
+                                                <button class="md-button md-button--36 md-button--icon md-input__icon-clear" id="md-button-50" data-md-event-key="md-button-50" alt="clear input" type="button" aria-label="clear input" aria-pressed="" tabindex="112" onclick="clearinput('briSub-{{ n.id }}')">
+                                                    <span class="md-button__children" style="opacity: 1;"><i class="md-icon icon icon-clear-active_16" style="font-size: 16px;"></i></span>
+                                                </button>
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="md-input__wrapper">
+                                            <input style="font-size: small" class="md-input md-input--after md-dirty" tabindex="13" type="text" id="briDG-{{ n.id }}" name="briDG-{{ n.id }}" placeholder="Default Gateway" value="{{ n.dg }}">
+                                            <span class="md-input__after">
+                                                <button class="md-button md-button--36 md-button--icon md-input__icon-clear" id="md-button-50" data-md-event-key="md-button-50" alt="clear input" type="button" aria-label="clear input" aria-pressed="" tabindex="113" onclick="clearinput('briDG-{{ n.id }}')">
+                                                    <span class="md-button__children" style="opacity: 1;"><i class="md-icon icon icon-clear-active_16" style="font-size: 16px;"></i></span>
+                                                </button>
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="md-input__wrapper">
+                                            <input style="font-size: small" class="md-input md-input--after md-dirty" tabindex="14" type="text" id="briPool-{{ n.id }}" name="briPool-{{ n.id }}" placeholder="Address Pool with /mask" value="{{ n.addrpool }}">
+                                            <span class="md-input__after">
+                                                <button class="md-button md-button--36 md-button--icon md-input__icon-clear" id="md-button-50" data-md-event-key="md-button-50" alt="clear input" type="button" aria-label="clear input" aria-pressed="" tabindex="114" onclick="clearinput('briPool-{{ n.id }}')">
+                                                    <span class="md-button__children" style="opacity: 1;"><i class="md-icon icon icon-clear-active_16" style="font-size: 16px;"></i></span>
+                                                </button>
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td>
+{#                                    {% if not i.wired %}#}
+                                        <div class="md-input-container columns medium-12" id="profilecontainer">
+                                            <div class="md-input__wrapper md-select">
+                                                <button id="btnprofile-{{ n.id }}" class="ignore md-button md-button--36 active" alt="" type="button" aria-labelledby="profilelabel-{{ profile.id }}" tabindex="30" name="md-select-69" aria-haspopup="listbox" onclick="toggleList('btnprofile-{{ n.id }}', 'dropdownprofile-{{ n.id }}', 'listprofile-{{ n.id }}')">
+                                                    <span class="ignore md-button__children" style="opacity: 1;">
+                                                        <div style="font-size: small" class="ignore md-list-item__left" id="profilelabel-{{ n.id }}">
+                                                            {% if n.linkprofile %}
+                                                                {{ n.linkprofile.description }}
+                                                            {% else %}
+                                                                None
+                                                            {% endif %}
+                                                            <i class="ignore icon icon-arrow-down_16"></i>
+                                                        </div>
+                                                    </span>
+                                                </button>
+                                                <div class="md-event-overlay md-event-overlay--bottom" id="dropdownprofile-{{ n.id }}" style="display:none;">
+                                                    <div class="md-event-overlay__children" id="listprofile-{{ n.id }}">
+                                                        <div id="profilecontent" class="md-list md-list--vertical md-list" role="listbox" aria-labelledby="md-select-69__label" aria-multiselectable="false">
+                                                            {% if not i.wired %}
+                                                                {% for profile in wireless_profiles %}
+                                                                <div aria-current="true" class="md-list-item" id="md-list-73__so-item" role="option" value="{{ profile.id }}" tabindex="0" title="{{ profile.description }}">
+                                                                    <div style="font-size: small" class="md-list-item__center" onclick="listclick('{{ profile.id }}', '{{ profile.description }}', 'profilelabel-{{ n.id }}', 'profileid-{{ n.id }}', 'profilename-{{ n.id }}', '')">{{ profile.description }}</div>
+                                                                    <div class="md-list-item__right"></div>
+                                                                </div>
+                                                                {% endfor %}
+                                                            {% else %}
+                                                                {% for profile in wired_profiles %}
+                                                                <div aria-current="true" class="md-list-item" id="md-list-73__so-item" role="option" value="{{ profile.id }}" tabindex="0" title="{{ profile.description }}">
+                                                                    <div style="font-size: small" class="md-list-item__center" onclick="listclick('{{ profile.id }}', '{{ profile.description }}', 'profilelabel-{{ n.id }}', 'profileid-{{ n.id }}', 'profilename-{{ n.id }}', '')">{{ profile.description }}</div>
+                                                                    <div class="md-list-item__right"></div>
+                                                                </div>
+                                                                {% endfor %}
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <input type="hidden" id="profileid-{{ n.id }}" name="profileid-{{ n.id }}" value="{{ profile.id }}" />
+                                        <input type="hidden" id="profilename-{{ n.id }}" name="profilename-{{ n.id }}" value="" />
+{#                                    {% endif %}#}
+                                    </td>
+                                    <td>
+                                    <a href="/home/config-vlan?id={{ n.id }}&action=delbridge"><span class="icon icon-delete_24"></span></a>
+                                    </td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% endif %}
+
+                    {% if i.network_set.all|length > 0 %}
+                        <table class="testTableClass">
+                            {% if i.active %}
+                            <thead class="md-data-table__thead">
+                            {% else %}
+                            <thead class="md-data-table__thead__disabled">
+                            {% endif %}
+                                <tr>
+                                    <th style="width: 8rem">VLAN</th>
+                                    <th style="width: 16rem">Description</th>
+{#                                    <th style="width: 12rem">Address Pool</th>#}
+                                    <th style="width: 12rem">Subnet</th>
+                                    <th style="width: 12rem">Gateway</th>
+                                    <th style="width: 12rem">Address Pool/Mask</th>
+                                    <th style="width: 16rem">Profile</th>
+                                    <th style="width: 4rem"></th>
+                                </tr>
+                            </thead>
+                            <tbody class="md-data-table__tbody">
+                                {% for n in i.network_set.all %}
+                                    {% if n.active %}
+                                    <tr>
+                                    {% else %}
+                                    <tr style="background-color: lightcoral">
+                                    {% endif %}
+                                    {% if i.name == "docker0" %}
+                                    <td>&nbsp;</td>
+                                    {% else %}
+                                    <td>
+                                        <div class="md-input__wrapper">
+                                            <input style="font-size: small" class="md-input md-input--after md-dirty" tabindex="10" type="text" id="netVlan-{{ n.id }}" name="netVlan-{{ n.id }}" placeholder="VLAN ID" value="{{ n.vlan }}">
+                                            <span class="md-input__after">
+                                                <button class="md-button md-button--36 md-button--icon md-input__icon-clear" id="md-button-50" data-md-event-key="md-button-50" alt="clear input" type="button" aria-label="clear input" aria-pressed="" tabindex="110" onclick="clearinput('netVlan-{{ n.id }}')">
+                                                    <span class="md-button__children" style="opacity: 1;"><i class="md-icon icon icon-clear-active_16" style="font-size: 16px;"></i></span>
+                                                </button>
+                                            </span>
+                                        </div>
+                                    </td>
+                                    {% endif %}
+                                    <td>
+                                        <div class="md-input__wrapper">
+                                            <input style="font-size: small" class="md-input md-input--after md-dirty" tabindex="11" type="text" id="netDesc-{{ n.id }}" name="netDesc-{{ n.id }}" placeholder="Friendly Network Description" value="{{ n.description }}">
+                                            <span class="md-input__after">
+                                                <button class="md-button md-button--36 md-button--icon md-input__icon-clear" id="md-button-50" data-md-event-key="md-button-50" alt="clear input" type="button" aria-label="clear input" aria-pressed="" tabindex="111" onclick="clearinput('netDesc-{{ n.id }}')">
+                                                    <span class="md-button__children" style="opacity: 1;"><i class="md-icon icon icon-clear-active_16" style="font-size: 16px;"></i></span>
+                                                </button>
+                                            </span>
+                                        </div>
+                                    </td>
+{#                                    {% if i.name == "docker0" %}#}
+{#                                    <td>{{ n.ippool.subnet }}</td>#}
+{#                                    {% else %}#}
+{#                                    <td>#}
+{#                                        <div class="md-input-container columns medium-12" id="netPool-container">#}
+{#                                            <div class="md-input__wrapper md-select">#}
+{#                                                <button id="netPool-btn-{{ n.id }}" class="ignore md-button md-button--36 active" alt="" type="button" aria-labelledby="netPool-label-{{ n.id }}" tabindex="30" name="md-select-69" aria-haspopup="listbox" onclick="toggleList('netPool-btn-{{ n.id }}', 'netPool-dropdown-{{ n.id }}', 'netPool-list-{{ n.id }}')">#}
+{#                                                    <span class="ignore md-button__children" style="opacity: 1;">#}
+{#                                                        <div style="font-size: small" class="ignore md-list-item__left" id="netPool-label-{{ n.id }}">#}
+{#                                                            {% if n.ippool %}#}
+{#                                                                {{ n.ippool.description }}#}
+{#                                                            {% else %}#}
+{#                                                                None#}
+{#                                                            {% endif %}#}
+{#                                                            <i class="ignore icon icon-arrow-down_16"></i>#}
+{#                                                        </div>#}
+{#                                                    </span>#}
+{#                                                </button>#}
+{#                                                <div class="md-event-overlay md-event-overlay--bottom" id="netPool-dropdown-{{ n.id }}" style="display:none;">#}
+{#                                                    <div class="md-event-overlay__children" id="netPool-list-{{ n.id }}">#}
+{#                                                        <div id="netPool-content" class="md-list md-list--vertical md-list" role="listbox" aria-labelledby="md-select-69__label" aria-multiselectable="false">#}
+{#                                                            {% for element in pools %}#}
+{#                                                            <div aria-current="true" class="md-list-item" id="md-list-73__so-item" role="option" value="{{ element.id }}" tabindex="0" title="{{ element.description }}">#}
+{#                                                                <div style="font-size: small" class="md-list-item__center" onclick="listclick('{{ element.id }}', '{{ element.description }}', 'netPool-label-{{ n.id }}', 'netPool-id-{{ n.id }}', 'netPool-name-{{ n.id }}', '')">{{ element.description }}</div>#}
+{#                                                                <div class="md-list-item__right"></div>#}
+{#                                                            </div>#}
+{#                                                            {% endfor %}#}
+{#                                                        </div>#}
+{#                                                    </div>#}
+{#                                                </div>#}
+{#                                            </div>#}
+{#                                        </div>#}
+{#                                        <input type="hidden" id="netPool-id-{{ n.id }}" name="netPool-id-{{ n.id }}" value="{{ n.ippool.id }}" />#}
+{#                                        <input type="hidden" id="netPool-name-{{ n.id }}" name="netPool-name-{{ n.id }}" value="" />#}
+{#                                    </td>#}
+{#                                    {% endif %}#}
+                                    {% if i.name == "docker0" %}
+                                    <td>{{ n.subnet }}</td>
+                                    {% else %}
+                                    <td>
+                                        <div class="md-input__wrapper">
+                                            <input style="font-size: small" class="md-input md-input--after md-dirty" tabindex="12" type="text" id="netSub-{{ n.id }}" name="netSub-{{ n.id }}" placeholder="Subnet with /mask" value="{{ n.subnet }}">
+                                            <span class="md-input__after">
+                                                <button class="md-button md-button--36 md-button--icon md-input__icon-clear" id="md-button-50" data-md-event-key="md-button-50" alt="clear input" type="button" aria-label="clear input" aria-pressed="" tabindex="112" onclick="clearinput('netSub-{{ n.id }}')">
+                                                    <span class="md-button__children" style="opacity: 1;"><i class="md-icon icon icon-clear-active_16" style="font-size: 16px;"></i></span>
+                                                </button>
+                                            </span>
+                                        </div>
+                                    </td>
+                                    {% endif %}
+                                    {% if i.name == "docker0" %}
+                                    <td>&nbsp;</td>
+                                    {% else %}
+                                    <td>
+                                        <div class="md-input__wrapper">
+                                            <input style="font-size: small" class="md-input md-input--after md-dirty" tabindex="13" type="text" id="netDG-{{ n.id }}" name="netDG-{{ n.id }}" placeholder="Default Gateway" value="{{ n.dg }}">
+                                            <span class="md-input__after">
+                                                <button class="md-button md-button--36 md-button--icon md-input__icon-clear" id="md-button-50" data-md-event-key="md-button-50" alt="clear input" type="button" aria-label="clear input" aria-pressed="" tabindex="113" onclick="clearinput('netDG-{{ n.id }}')">
+                                                    <span class="md-button__children" style="opacity: 1;"><i class="md-icon icon icon-clear-active_16" style="font-size: 16px;"></i></span>
+                                                </button>
+                                            </span>
+                                        </div>
+                                    </td>
+                                    {% endif %}
+                                    {% if i.name == "docker0" %}
+                                    <td>&nbsp;</td>
+                                    {% else %}
+                                    <td>
+                                        <div class="md-input__wrapper">
+                                            <input style="font-size: small" class="md-input md-input--after md-dirty" tabindex="14" type="text" id="netPool-{{ n.id }}" name="netPool-{{ n.id }}" placeholder="Address Pool with /mask" value="{{ n.addrpool }}">
+                                            <span class="md-input__after">
+                                                <button class="md-button md-button--36 md-button--icon md-input__icon-clear" id="md-button-50" data-md-event-key="md-button-50" alt="clear input" type="button" aria-label="clear input" aria-pressed="" tabindex="114" onclick="clearinput('netPool-{{ n.id }}')">
+                                                    <span class="md-button__children" style="opacity: 1;"><i class="md-icon icon icon-clear-active_16" style="font-size: 16px;"></i></span>
+                                                </button>
+                                            </span>
+                                        </div>
+                                    </td>
+                                    {% endif %}
+                                    <td>
+                                        {% if i.name != "docker0" %}
+                                            <div class="md-input-container columns medium-12" id="profilecontainer">
+                                                <div class="md-input__wrapper md-select">
+                                                    <button id="btnprofile-{{ n.id }}" class="ignore md-button md-button--36 active" alt="" type="button" aria-labelledby="profilelabel-{{ profile.id }}" tabindex="30" name="md-select-69" aria-haspopup="listbox" onclick="toggleList('btnprofile-{{ n.id }}', 'dropdownprofile-{{ n.id }}', 'listprofile-{{ n.id }}')">
+                                                        <span class="ignore md-button__children" style="opacity: 1;">
+                                                            <div style="font-size: small" class="ignore md-list-item__left" id="profilelabel-{{ n.id }}">
+                                                                {% if n.linkprofile %}
+                                                                    {{ n.linkprofile.description }}
+                                                                {% else %}
+                                                                    None
+                                                                {% endif %}
+                                                                <i class="ignore icon icon-arrow-down_16"></i>
+                                                            </div>
+                                                        </span>
+                                                    </button>
+                                                    <div class="md-event-overlay md-event-overlay--bottom" id="dropdownprofile-{{ n.id }}" style="display:none;">
+                                                        <div class="md-event-overlay__children" id="listprofile-{{ n.id }}">
+                                                            <div id="profilecontent" class="md-list md-list--vertical md-list" role="listbox" aria-labelledby="md-select-69__label" aria-multiselectable="false">
+                                                                {% for profile in wired_profiles %}
+                                                                <div aria-current="true" class="md-list-item" id="md-list-73__so-item" role="option" value="{{ profile.id }}" tabindex="0" title="{{ profile.description }}">
+                                                                    <div style="font-size: small" class="md-list-item__center" onclick="listclick('{{ profile.id }}', '{{ profile.description }}', 'profilelabel-{{ n.id }}', 'profileid-{{ n.id }}', 'profilename-{{ n.id }}', '')">{{ profile.description }}</div>
+                                                                    <div class="md-list-item__right"></div>
+                                                                </div>
+                                                                {% endfor %}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <input type="hidden" id="profileid-{{ n.id }}" name="profileid-{{ n.id }}" value="{{ profile.id }}" />
+                                            <input type="hidden" id="profilename-{{ n.id }}" name="profilename-{{ n.id }}" value="" />
+                                        {% endif %}
+                                    </td><td>
+                                    <a href="/home/config-vlan?id={{ n.id }}&action=delvlan"><span class="icon icon-delete_24"></span></a>
+                                    </td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p>No Logical Interfaces Configured</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="row">&nbsp;</div>
+        <div id="bottom_save">
+            <div class="md-panel md-panel__form" style="width:100%;padding:0px">
+                {% csrf_token %}
+                <div class="md-input-group" style="width:100%;padding:20px;background-color:#FFF5E0;border-color:#cbb013;border-width:1px;border-style:solid">
+                    <div class="md-input__icon-container">
+                        <div class="row" style="align-content:center; display:flex">
+                            <div class="md-input-container columns medium-6">
+                                <div class="md-input__wrapper">
+                                    <button class="md-button md-button--blue" tabindex="50">Save Changes</button> or <a href="/home/config-vlan">cancel</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+{% endblock %}

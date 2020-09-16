@@ -7,18 +7,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://downloads.momentum-ui.com/@momentum-ui/core/css/momentum-ui.min.css" rel="stylesheet">
     <title>Client Simulator</title>
+    <script>
+        function clearinput(inputid) {
+            let src = document.getElementById(inputid);
+            src.value = "";
+        }
+    </script>
 </head>
 
 <body>
     <div class="md-panel md-panel--form md-panel--full">
-       <div class="md-panel__main">
-          <img alt="" class="md-panel__image" src="https://meraki.cisco.com/img/cisco-meraki-logo.png">
-          <div class="md-panel__cta" style="width:200%">
-             <table border="0">
-                {% block content %}
-                {% endblock %}
-             </table>
-          </div>
+        <div class="md-panel__main">
+            <img alt="" class="md-panel__image" src="https://meraki.cisco.com/img/cisco-meraki-logo.png">
+            {% block content %}
+            {% endblock %}
        </div>
        <div class="md-panel__footer">
           <div class="footer__logo">
@@ -26,6 +28,5 @@
           </div>
        </div>
     </div>
-</body>
-
+    </body>
 </html>
