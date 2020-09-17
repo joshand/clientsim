@@ -15,9 +15,9 @@
                     {% if i.name != "docker0" and i.wired %}
                         <a href="/home/config-vlan?id={{ i.id }}&action=addvlan"><span style="font-size: x-small">[Add VLAN]</span></a>
                     {% endif %}
-                    {% if i.name != "docker0" %}
-                        <a href="/home/config-vlan?id={{ i.id }}&action=makebridge"><span style="font-size: x-small">[Make Bridge]</span></a>
-                    {% endif %}
+{#                    {% if i.name != "docker0" %}#}
+{#                        <a href="/home/config-vlan?id={{ i.id }}&action=makebridge"><span style="font-size: x-small">[Make Bridge]</span></a>#}
+{#                    {% endif %}#}
 
                     {% if i.bridge_set.all|length > 0 %}
                         <table class="testTableClass">
